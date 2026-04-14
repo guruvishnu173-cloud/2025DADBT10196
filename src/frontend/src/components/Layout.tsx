@@ -34,7 +34,7 @@ export default function Layout() {
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-xl text-foreground tracking-tight">
-              PaperVault
+              VVITU@2025DADBT1018x
             </span>
           </Link>
 
@@ -108,8 +108,8 @@ export default function Layout() {
           <div className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-primary/60" />
             <span>
-              PaperVault &copy; {new Date().getFullYear()}. Built with love
-              using{" "}
+              VVITU@2025DADBT1018x &copy; {new Date().getFullYear()}. Built with
+              love using{" "}
               <a
                 href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
                 target="_blank"

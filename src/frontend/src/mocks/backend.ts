@@ -58,4 +58,7 @@ export const mockBackend: backendInterface = {
   removeSubject: async () => undefined,
   trackVisit: async () => BigInt(143),
   uploadPaper: async () => BigInt(4),
+  getNote: async () => null,
+  setNote: async () => undefined,
+  clearNote: async () => undefined,
 };

@@ -18,6 +18,11 @@ type UserRole =
    user;
  };
 type Timestamp = int;
+type SiteNote = 
+ record {
+   content: text;
+   updatedAt: Timestamp;
+ };
 type QuestionPaper = 
  record {
    id: PaperId;
@@ -49,8 +54,10 @@ service : {
   addMidType: (midType: text) -> ();
   addSubject: (subject: text) -> ();
   assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  clearNote: () -> ();
   deletePaper: (id: PaperId) -> (bool);
   getCallerUserRole: () -> (UserRole) query;
+  getNote: () -> (opt SiteNote) query;
   getPaper: (id: PaperId) -> (opt QuestionPaper) query;
   getVisitorCount: () -> (nat) query;
   isCallerAdmin: () -> (bool) query;
@@ -59,6 +66,7 @@ service : {
   listSubjects: () -> (vec text) query;
   removeMidType: (midType: text) -> ();
   removeSubject: (subject: text) -> ();
+  setNote: (content: text) -> ();
   trackVisit: () -> (nat);
   uploadPaper: (year: text, subject: text, midType: text, storageRef:
    ExternalBlob) -> (PaperId);

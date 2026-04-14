@@ -7,6 +7,8 @@ import PaperTypes "types/papers";
 import PapersApi "mixins/papers-api";
 import OptionsApi "mixins/options-api";
 import VisitsApi "mixins/visits-api";
+import NoteTypes "types/note";
+import NoteApi "mixins/note-api";
 
 actor {
   // Authorization state
@@ -26,11 +28,17 @@ actor {
   let subjects = List.empty<Text>();
   let midTypes = List.empty<Text>();
 
-  OptionsLib.addSubject(subjects, "CSE");
-  OptionsLib.addSubject(subjects, "ECE");
-  OptionsLib.addSubject(subjects, "MECH");
-  OptionsLib.addSubject(subjects, "CIVIL");
-  OptionsLib.addSubject(subjects, "IT");
+  OptionsLib.addSubject(subjects, "Calculus");
+  OptionsLib.addSubject(subjects, "Differential Equations and Transformations");
+  OptionsLib.addSubject(subjects, "Eng 1");
+  OptionsLib.addSubject(subjects, "Eng 2");
+  OptionsLib.addSubject(subjects, "Physics");
+  OptionsLib.addSubject(subjects, "Chemistry");
+  OptionsLib.addSubject(subjects, "BEEE");
+  OptionsLib.addSubject(subjects, "Graphics");
+  OptionsLib.addSubject(subjects, "DLSD");
+  OptionsLib.addSubject(subjects, "Programming in C");
+  OptionsLib.addSubject(subjects, "Python");
   OptionsLib.addMidType(midTypes, "MID-1");
   OptionsLib.addMidType(midTypes, "MID-2");
   OptionsLib.addMidType(midTypes, "SUPPLE");
@@ -41,4 +49,9 @@ actor {
   let visitCount = object { public var value : Nat = 0 };
 
   include VisitsApi(visitCount);
+
+  // Site-wide note state
+  let noteState = object { public var siteNote : ?NoteTypes.SiteNote = null };
+
+  include NoteApi(accessControlState, noteState);
 };

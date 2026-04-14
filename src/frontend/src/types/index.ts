@@ -20,3 +20,8 @@ export interface VisitStats {
 }
 
 export type AdminView = "papers" | "subjects" | "midtypes";
+
+export interface SiteNote {
+  content: string;
+  updatedAt: bigint;
+}

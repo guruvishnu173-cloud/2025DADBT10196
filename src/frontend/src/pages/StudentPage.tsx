@@ -11,7 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useListPapers, useMidTypes, useSubjects } from "@/hooks/useQueries";
+import {
+  useListPapers,
+  useMidTypes,
+  useNote,
+  useSubjects,
+} from "@/hooks/useQueries";
 import type { PaperFilter, QuestionPaper } from "@/types";
 import {
   BookOpen,
@@ -20,6 +25,7 @@ import {
   Eye,
   FileSearch,
   FileText,
+  Info,
   Search,
   X,
 } from "lucide-react";
@@ -164,6 +170,7 @@ export default function StudentPage() {
   const { data: midTypes = [], isLoading: midTypesLoading } = useMidTypes();
   const { data: papers = [], isLoading: papersLoading } =
     useListPapers(committedFilter);
+  const { data: siteNote } = useNote();
 
   const handleFind = () => {
     const filter: PaperFilter = {};
@@ -331,6 +338,24 @@ export default function StudentPage() {
         className="container mx-auto px-4 py-8"
         data-ocid="papers.section"
       >
+        {/* Site-wide note — shown only when present */}
+        {siteNote && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6 flex gap-3 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3.5"
+            data-ocid="sitenote.card"
+          >
+            <div className="mt-0.5 flex-shrink-0">
+              <Info className="w-4 h-4 text-primary" />
+            </div>
+            <p className="text-sm font-body text-foreground leading-relaxed whitespace-pre-wrap">
+              {siteNote.content}
+            </p>
+          </motion.div>
+        )}
+
         {!hasSearched ? (
           /* Pre-search prompt */
           <motion.div

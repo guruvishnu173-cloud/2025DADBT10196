@@ -16,6 +16,10 @@ export class ExternalBlob {
 }
 export type Timestamp = bigint;
 export type PaperId = bigint;
+export interface SiteNote {
+    content: string;
+    updatedAt: Timestamp;
+}
 export interface PaperFilter {
     subject?: string;
     year?: string;
@@ -38,8 +42,10 @@ export interface backendInterface {
     addMidType(midType: string): Promise<void>;
     addSubject(subject: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    clearNote(): Promise<void>;
     deletePaper(id: PaperId): Promise<boolean>;
     getCallerUserRole(): Promise<UserRole>;
+    getNote(): Promise<SiteNote | null>;
     getPaper(id: PaperId): Promise<QuestionPaper | null>;
     getVisitorCount(): Promise<bigint>;
     isCallerAdmin(): Promise<boolean>;
@@ -48,6 +54,7 @@ export interface backendInterface {
     listSubjects(): Promise<Array<string>>;
     removeMidType(midType: string): Promise<void>;
     removeSubject(subject: string): Promise<void>;
+    setNote(content: string): Promise<void>;
     trackVisit(): Promise<bigint>;
     uploadPaper(year: string, subject: string, midType: string, storageRef: ExternalBlob): Promise<PaperId>;
 }

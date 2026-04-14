@@ -25,6 +25,7 @@ export interface QuestionPaper {
   'midType' : string,
   'storageRef' : ExternalBlob,
 }
+export interface SiteNote { 'content' : string, 'updatedAt' : Timestamp }
 export type Timestamp = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -63,8 +64,10 @@ export interface _SERVICE {
   'addMidType' : ActorMethod<[string], undefined>,
   'addSubject' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'clearNote' : ActorMethod<[], undefined>,
   'deletePaper' : ActorMethod<[PaperId], boolean>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getNote' : ActorMethod<[], [] | [SiteNote]>,
   'getPaper' : ActorMethod<[PaperId], [] | [QuestionPaper]>,
   'getVisitorCount' : ActorMethod<[], bigint>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
@@ -73,6 +76,7 @@ export interface _SERVICE {
   'listSubjects' : ActorMethod<[], Array<string>>,
   'removeMidType' : ActorMethod<[string], undefined>,
   'removeSubject' : ActorMethod<[string], undefined>,
+  'setNote' : ActorMethod<[string], undefined>,
   'trackVisit' : ActorMethod<[], bigint>,
   'uploadPaper' : ActorMethod<[string, string, string, ExternalBlob], PaperId>,
 }

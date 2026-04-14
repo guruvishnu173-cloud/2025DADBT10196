@@ -26,6 +26,10 @@ export const UserRole = IDL.Variant({
 });
 export const PaperId = IDL.Nat;
 export const Timestamp = IDL.Int;
+export const SiteNote = IDL.Record({
+  'content' : IDL.Text,
+  'updatedAt' : Timestamp,
+});
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const QuestionPaper = IDL.Record({
   'id' : PaperId,
@@ -72,8 +76,10 @@ export const idlService = IDL.Service({
   'addMidType' : IDL.Func([IDL.Text], [], []),
   'addSubject' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'clearNote' : IDL.Func([], [], []),
   'deletePaper' : IDL.Func([PaperId], [IDL.Bool], []),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getNote' : IDL.Func([], [IDL.Opt(SiteNote)], ['query']),
   'getPaper' : IDL.Func([PaperId], [IDL.Opt(QuestionPaper)], ['query']),
   'getVisitorCount' : IDL.Func([], [IDL.Nat], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
@@ -82,6 +88,7 @@ export const idlService = IDL.Service({
   'listSubjects' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'removeMidType' : IDL.Func([IDL.Text], [], []),
   'removeSubject' : IDL.Func([IDL.Text], [], []),
+  'setNote' : IDL.Func([IDL.Text], [], []),
   'trackVisit' : IDL.Func([], [IDL.Nat], []),
   'uploadPaper' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, ExternalBlob],
@@ -111,6 +118,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const PaperId = IDL.Nat;
   const Timestamp = IDL.Int;
+  const SiteNote = IDL.Record({
+    'content' : IDL.Text,
+    'updatedAt' : Timestamp,
+  });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const QuestionPaper = IDL.Record({
     'id' : PaperId,
@@ -157,8 +168,10 @@ export const idlFactory = ({ IDL }) => {
     'addMidType' : IDL.Func([IDL.Text], [], []),
     'addSubject' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'clearNote' : IDL.Func([], [], []),
     'deletePaper' : IDL.Func([PaperId], [IDL.Bool], []),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getNote' : IDL.Func([], [IDL.Opt(SiteNote)], ['query']),
     'getPaper' : IDL.Func([PaperId], [IDL.Opt(QuestionPaper)], ['query']),
     'getVisitorCount' : IDL.Func([], [IDL.Nat], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
@@ -167,6 +180,7 @@ export const idlFactory = ({ IDL }) => {
     'listSubjects' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'removeMidType' : IDL.Func([IDL.Text], [], []),
     'removeSubject' : IDL.Func([IDL.Text], [], []),
+    'setNote' : IDL.Func([IDL.Text], [], []),
     'trackVisit' : IDL.Func([], [IDL.Nat], []),
     'uploadPaper' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, ExternalBlob],

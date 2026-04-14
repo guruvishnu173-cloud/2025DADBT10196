@@ -91,6 +91,10 @@ export class ExternalBlob {
 }
 export type Timestamp = bigint;
 export type PaperId = bigint;
+export interface SiteNote {
+    content: string;
+    updatedAt: Timestamp;
+}
 export interface PaperFilter {
     subject?: string;
     year?: string;
@@ -131,8 +135,10 @@ export interface backendInterface {
     addMidType(midType: string): Promise<void>;
     addSubject(subject: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    clearNote(): Promise<void>;
     deletePaper(id: PaperId): Promise<boolean>;
     getCallerUserRole(): Promise<UserRole>;
+    getNote(): Promise<SiteNote | null>;
     getPaper(id: PaperId): Promise<QuestionPaper | null>;
     getVisitorCount(): Promise<bigint>;
     isCallerAdmin(): Promise<boolean>;
@@ -141,10 +147,11 @@ export interface backendInterface {
     listSubjects(): Promise<Array<string>>;
     removeMidType(midType: string): Promise<void>;
     removeSubject(subject: string): Promise<void>;
+    setNote(content: string): Promise<void>;
     trackVisit(): Promise<bigint>;
     uploadPaper(year: string, subject: string, midType: string, storageRef: ExternalBlob): Promise<PaperId>;
 }
-import type { ExternalBlob as _ExternalBlob, PaperFilter as _PaperFilter, PaperId as _PaperId, QuestionPaper as _QuestionPaper, Timestamp as _Timestamp, UserRole as _UserRole, _ImmutableObjectStorageRefillInformation as __ImmutableObjectStorageRefillInformation, _ImmutableObjectStorageRefillResult as __ImmutableObjectStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ExternalBlob as _ExternalBlob, PaperFilter as _PaperFilter, PaperId as _PaperId, QuestionPaper as _QuestionPaper, SiteNote as _SiteNote, Timestamp as _Timestamp, UserRole as _UserRole, _ImmutableObjectStorageRefillInformation as __ImmutableObjectStorageRefillInformation, _ImmutableObjectStorageRefillResult as __ImmutableObjectStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _immutableObjectStorageBlobsAreLive(arg0: Array<Uint8Array>): Promise<Array<boolean>> {
@@ -287,6 +294,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async clearNote(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.clearNote();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.clearNote();
+            return result;
+        }
+    }
     async deletePaper(arg0: PaperId): Promise<boolean> {
         if (this.processError) {
             try {
@@ -315,18 +336,32 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n10(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getPaper(arg0: PaperId): Promise<QuestionPaper | null> {
+    async getNote(): Promise<SiteNote | null> {
         if (this.processError) {
             try {
-                const result = await this.actor.getPaper(arg0);
+                const result = await this.actor.getNote();
                 return from_candid_opt_n12(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getPaper(arg0);
+            const result = await this.actor.getNote();
             return from_candid_opt_n12(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getPaper(arg0: PaperId): Promise<QuestionPaper | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPaper(arg0);
+                return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPaper(arg0);
+            return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
         }
     }
     async getVisitorCount(): Promise<bigint> {
@@ -374,15 +409,15 @@ export class Backend implements backendInterface {
     async listPapers(arg0: PaperFilter): Promise<Array<QuestionPaper>> {
         if (this.processError) {
             try {
-                const result = await this.actor.listPapers(to_candid_PaperFilter_n16(this._uploadFile, this._downloadFile, arg0));
-                return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.listPapers(to_candid_PaperFilter_n17(this._uploadFile, this._downloadFile, arg0));
+                return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.listPapers(to_candid_PaperFilter_n16(this._uploadFile, this._downloadFile, arg0));
-            return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.listPapers(to_candid_PaperFilter_n17(this._uploadFile, this._downloadFile, arg0));
+            return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
         }
     }
     async listSubjects(): Promise<Array<string>> {
@@ -427,6 +462,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async setNote(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setNote(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setNote(arg0);
+            return result;
+        }
+    }
     async trackVisit(): Promise<bigint> {
         if (this.processError) {
             try {
@@ -444,23 +493,23 @@ export class Backend implements backendInterface {
     async uploadPaper(arg0: string, arg1: string, arg2: string, arg3: ExternalBlob): Promise<PaperId> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadPaper(arg0, arg1, arg2, await to_candid_ExternalBlob_n19(this._uploadFile, this._downloadFile, arg3));
+                const result = await this.actor.uploadPaper(arg0, arg1, arg2, await to_candid_ExternalBlob_n20(this._uploadFile, this._downloadFile, arg3));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadPaper(arg0, arg1, arg2, await to_candid_ExternalBlob_n19(this._uploadFile, this._downloadFile, arg3));
+            const result = await this.actor.uploadPaper(arg0, arg1, arg2, await to_candid_ExternalBlob_n20(this._uploadFile, this._downloadFile, arg3));
             return result;
         }
     }
 }
-async function from_candid_ExternalBlob_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
+async function from_candid_ExternalBlob_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
     return await _downloadFile(value);
 }
-async function from_candid_QuestionPaper_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _QuestionPaper): Promise<QuestionPaper> {
-    return await from_candid_record_n14(_uploadFile, _downloadFile, value);
+async function from_candid_QuestionPaper_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _QuestionPaper): Promise<QuestionPaper> {
+    return await from_candid_record_n15(_uploadFile, _downloadFile, value);
 }
 function from_candid_UserRole_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n11(_uploadFile, _downloadFile, value);
@@ -468,8 +517,11 @@ function from_candid_UserRole_n10(_uploadFile: (file: ExternalBlob) => Promise<U
 function from_candid__ImmutableObjectStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __ImmutableObjectStorageRefillResult): _ImmutableObjectStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-async function from_candid_opt_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_QuestionPaper]): Promise<QuestionPaper | null> {
-    return value.length === 0 ? null : await from_candid_QuestionPaper_n13(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_SiteNote]): SiteNote | null {
+    return value.length === 0 ? null : value[0];
+}
+async function from_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_QuestionPaper]): Promise<QuestionPaper | null> {
+    return value.length === 0 ? null : await from_candid_QuestionPaper_n14(_uploadFile, _downloadFile, value[0]);
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
     return value.length === 0 ? null : value[0];
@@ -477,7 +529,7 @@ function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-async function from_candid_record_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: _PaperId;
     subject: string;
     year: string;
@@ -498,7 +550,7 @@ async function from_candid_record_n14(_uploadFile: (file: ExternalBlob) => Promi
         year: value.year,
         uploadTimestamp: value.uploadTimestamp,
         midType: value.midType,
-        storageRef: await from_candid_ExternalBlob_n15(_uploadFile, _downloadFile, value.storageRef)
+        storageRef: await from_candid_ExternalBlob_n16(_uploadFile, _downloadFile, value.storageRef)
     };
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -522,14 +574,14 @@ function from_candid_variant_n11(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-async function from_candid_vec_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_QuestionPaper>): Promise<Array<QuestionPaper>> {
-    return await Promise.all(value.map(async (x)=>await from_candid_QuestionPaper_n13(_uploadFile, _downloadFile, x)));
+async function from_candid_vec_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_QuestionPaper>): Promise<Array<QuestionPaper>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_QuestionPaper_n14(_uploadFile, _downloadFile, x)));
 }
-async function to_candid_ExternalBlob_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
+async function to_candid_ExternalBlob_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
-function to_candid_PaperFilter_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PaperFilter): _PaperFilter {
-    return to_candid_record_n17(_uploadFile, _downloadFile, value);
+function to_candid_PaperFilter_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PaperFilter): _PaperFilter {
+    return to_candid_record_n18(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -540,7 +592,7 @@ function to_candid__ImmutableObjectStorageRefillInformation_n2(_uploadFile: (fil
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ImmutableObjectStorageRefillInformation | null): [] | [__ImmutableObjectStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__ImmutableObjectStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-function to_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     subject?: string;
     year?: string;
     midType?: string;

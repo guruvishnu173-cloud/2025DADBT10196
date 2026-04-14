@@ -23,6 +23,7 @@ type QuestionPaper__880740770 =
     uploadTimestamp : Timestamp__301639476;
     year : Text
   };
+type SiteNote__24883017 = {content : Text; updatedAt : Timestamp__301639476};
 type Timestamp__301639476 = Int;
 type UserRole__1054455867 = {#admin; #guest; #user};
 actor {
@@ -38,6 +39,7 @@ actor {
       var elementIndex : Nat__490723111
     };
   stable nextPaperId : {var value : Nat};
+  stable noteState : {var siteNote : ?SiteNote__24883017};
   stable papers :
     {
       var blockIndex : Nat__490723111;

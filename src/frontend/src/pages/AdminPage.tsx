@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useAddMidType,
   useAddSubject,
@@ -23,6 +24,8 @@ import {
   useIsAdmin,
   useListPapers,
   useMidTypes,
+  useMutateNote,
+  useNote,
   useRemoveMidType,
   useRemoveSubject,
   useSubjects,
@@ -35,6 +38,7 @@ import {
   BookOpen,
   FileText,
   LogIn,
+  MessageSquare,
   Plus,
   ShieldCheck,
   ShieldX,
@@ -46,7 +50,7 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // ─── Visitor Stats Card ───────────────────────────────────────────────────────
@@ -456,6 +460,172 @@ function PaperRow({ paper, index }: { paper: QuestionPaper; index: number }) {
   );
 }
 
+// ─── Site Note Manager ────────────────────────────────────────────────────────
+
+function SiteNoteManager() {
+  const { data: siteNote, isLoading } = useNote();
+  const { setNote, clearNote } = useMutateNote();
+  const [draft, setDraft] = useState("");
+  const [synced, setSynced] = useState(false);
+
+  // Sync draft from server when note loads (only once)
+  useEffect(() => {
+    if (!synced && siteNote !== undefined) {
+      setDraft(siteNote?.content ?? "");
+      setSynced(true);
+    }
+  }, [siteNote, synced]);
+
+  const handleSave = async () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    try {
+      await setNote.mutateAsync(trimmed);
+      toast.success("Site note saved");
+    } catch {
+      toast.error("Failed to save note");
+    }
+  };
+
+  const handleClear = async () => {
+    try {
+      await clearNote.mutateAsync();
+      setDraft("");
+      setSynced(false);
+      toast.success("Site note cleared");
+    } catch {
+      toast.error("Failed to clear note");
+    }
+  };
+
+  const isSaving = setNote.isPending;
+  const isClearing = clearNote.isPending;
+
+  return (
+    <div
+      className="bg-card border border-border rounded-xl p-6 space-y-5"
+      data-ocid="sitenote.panel"
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+          <MessageSquare className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <h2 className="font-display font-semibold text-foreground">
+            Site-wide Note
+          </h2>
+          <p className="text-sm text-muted-foreground font-body mt-0.5">
+            This message is shown to all students just above the question paper
+            archive. Leave it blank or clear it to hide the banner.
+          </p>
+        </div>
+      </div>
+
+      {/* Current note preview */}
+      {isLoading ? (
+        <Skeleton
+          className="h-20 w-full rounded-lg"
+          data-ocid="sitenote.loading_state"
+        />
+      ) : siteNote ? (
+        <div
+          className="rounded-lg border border-primary/20 bg-primary/6 px-4 py-3"
+          data-ocid="sitenote.preview"
+        >
+          <p className="text-xs font-medium text-primary mb-1 uppercase tracking-wide">
+            Currently visible to students
+          </p>
+          <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">
+            {siteNote.content}
+          </p>
+        </div>
+      ) : (
+        <div
+          className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3"
+          data-ocid="sitenote.empty_state"
+        >
+          <p className="text-sm text-muted-foreground font-body italic">
+            No note is currently displayed. Write one below to publish it.
+          </p>
+        </div>
+      )}
+
+      {/* Editor */}
+      <div className="space-y-2">
+        <Label
+          htmlFor="sitenote-textarea"
+          className="text-sm font-medium text-foreground"
+        >
+          Note Content
+        </Label>
+        <Textarea
+          id="sitenote-textarea"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Type your message for students here… e.g. 'Mid-1 2024 papers are now available!'"
+          rows={4}
+          className="resize-y text-sm font-body"
+          data-ocid="sitenote.textarea"
+        />
+        <p className="text-xs text-muted-foreground font-body">
+          {draft.trim().length} characters
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button
+          onClick={handleSave}
+          disabled={isSaving || !draft.trim()}
+          className="gap-2"
+          data-ocid="sitenote.save_button"
+        >
+          {isSaving ? "Saving…" : "Save Note"}
+        </Button>
+
+        {siteNote && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/8 hover:text-destructive"
+                disabled={isClearing}
+                data-ocid="sitenote.clear_button"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isClearing ? "Clearing…" : "Clear Note"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent data-ocid="sitenote.dialog">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear site note?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  The note will be removed and no longer shown to students. You
+                  can publish a new one any time.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel data-ocid="sitenote.cancel_button">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleClear}
+                  data-ocid="sitenote.confirm_button"
+                >
+                  Clear note
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin Dashboard ──────────────────────────────────────────────────────────
+
 function AdminDashboard() {
   const { data: papers = [], isLoading: papersLoading } = useListPapers({});
   const { data: subjects = [] } = useSubjects();
@@ -521,6 +691,14 @@ function AdminDashboard() {
           >
             <Tag className="w-4 h-4" />
             Subjects &amp; Types
+          </TabsTrigger>
+          <TabsTrigger
+            value="sitenote"
+            className="gap-1.5"
+            data-ocid="admin.sitenote_tab"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Site Note
           </TabsTrigger>
         </TabsList>
 
@@ -602,6 +780,11 @@ function AdminDashboard() {
               />
             </div>
           </div>
+        </TabsContent>
+
+        {/* Site Note tab */}
+        <TabsContent value="sitenote">
+          <SiteNoteManager />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,5 +1,5 @@
 import { ExternalBlob, createActor } from "@/backend";
-import type { PaperFilter, QuestionPaper } from "@/types";
+import type { PaperFilter, QuestionPaper, SiteNote } from "@/types";
 import { useActor } from "@caffeineai/core-infrastructure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -23,6 +23,9 @@ interface BackendActor {
   removeSubject(subject: string): Promise<void>;
   addMidType(midType: string): Promise<void>;
   removeMidType(midType: string): Promise<void>;
+  getNote(): Promise<SiteNote | null>;
+  setNote(content: string): Promise<void>;
+  clearNote(): Promise<void>;
 }
 
 function useBackendActor() {
@@ -216,4 +219,45 @@ export function useRemoveMidType() {
       qc.invalidateQueries({ queryKey: ["midTypes"] });
     },
   });
+}
+
+// ─── Site Note ────────────────────────────────────────────────────────────────
+
+export function useNote() {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<SiteNote | null>({
+    queryKey: ["siteNote"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getNote();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useMutateNote() {
+  const qc = useQueryClient();
+  const { actor } = useBackendActor();
+
+  const setNote = useMutation<void, Error, string>({
+    mutationFn: async (content) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.setNote(content);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["siteNote"] });
+    },
+  });
+
+  const clearNote = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.clearNote();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["siteNote"] });
+    },
+  });
+
+  return { setNote, clearNote };
 }
