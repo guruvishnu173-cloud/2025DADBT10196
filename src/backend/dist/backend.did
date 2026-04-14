@@ -1,0 +1,65 @@
+type _ImmutableObjectStorageRefillResult = 
+ record {
+   success: opt bool;
+   topped_up_amount: opt nat;
+ };
+type _ImmutableObjectStorageRefillInformation = record {
+                                                  proposed_top_up_amount:
+                                                   opt nat;};
+type _ImmutableObjectStorageCreateCertificateResult = 
+ record {
+   blob_hash: text;
+   method: text;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type Timestamp = int;
+type QuestionPaper = 
+ record {
+   id: PaperId;
+   midType: text;
+   storageRef: ExternalBlob;
+   subject: text;
+   uploadTimestamp: Timestamp;
+   year: text;
+ };
+type PaperId = nat;
+type PaperFilter = 
+ record {
+   midType: opt text;
+   subject: opt text;
+   year: opt text;
+ };
+type ExternalBlob = blob;
+service : {
+  _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
+  _immutableObjectStorageBlobsToDelete: () -> (vec blob) query;
+  _immutableObjectStorageConfirmBlobDeletion: (blobs: vec blob) -> ();
+  _immutableObjectStorageCreateCertificate: (blobHash: text) ->
+   (_ImmutableObjectStorageCreateCertificateResult);
+  _immutableObjectStorageRefillCashier: (refillInformation:
+   opt _ImmutableObjectStorageRefillInformation) ->
+   (_ImmutableObjectStorageRefillResult);
+  _immutableObjectStorageUpdateGatewayPrincipals: () -> ();
+  _initializeAccessControl: () -> ();
+  addMidType: (midType: text) -> ();
+  addSubject: (subject: text) -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  deletePaper: (id: PaperId) -> (bool);
+  getCallerUserRole: () -> (UserRole) query;
+  getPaper: (id: PaperId) -> (opt QuestionPaper) query;
+  getVisitorCount: () -> (nat) query;
+  isCallerAdmin: () -> (bool) query;
+  listMidTypes: () -> (vec text) query;
+  listPapers: (filter: PaperFilter) -> (vec QuestionPaper) query;
+  listSubjects: () -> (vec text) query;
+  removeMidType: (midType: text) -> ();
+  removeSubject: (subject: text) -> ();
+  trackVisit: () -> (nat);
+  uploadPaper: (year: text, subject: text, midType: text, storageRef:
+   ExternalBlob) -> (PaperId);
+}

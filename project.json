@@ -1,0 +1,20 @@
+{
+  "overview": "A question paper library where only the owner can upload PDFs organized by year, subject, and mid type. Students can search, view, and download papers. The app tracks total visitor count.",
+  "features": [
+    "Filter by year, subject, and mid type",
+    "View PDF in browser or download with descriptive filename",
+    "Admin-only upload and delete with Internet Identity login",
+    "Visitor count tracking",
+    "Object storage for PDF files"
+  ],
+  "category": "productivity",
+  "tags": [
+    "education",
+    "question-papers",
+    "pdf",
+    "college",
+    "admin",
+    "file-upload"
+  ],
+  "last_updated": "2026-04-14T15:43:36.546Z"
+}
