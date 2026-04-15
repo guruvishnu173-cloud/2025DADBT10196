@@ -32,6 +32,13 @@ type QuestionPaper =
    uploadTimestamp: Timestamp;
    year: text;
  };
+type PublicMessage = 
+ record {
+   authorName: text;
+   content: text;
+   createdAt: Timestamp;
+   id: nat;
+ };
 type PaperId = nat;
 type PaperFilter = 
  record {
@@ -40,6 +47,14 @@ type PaperFilter =
    year: opt text;
  };
 type ExternalBlob = blob;
+type AdminMessage = 
+ record {
+   content: text;
+   createdAt: Timestamp;
+   id: nat;
+   imageRef: opt text;
+   updatedAt: Timestamp;
+ };
 service : {
   _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
   _immutableObjectStorageBlobsToDelete: () -> (vec blob) query;
@@ -51,23 +66,30 @@ service : {
    (_ImmutableObjectStorageRefillResult);
   _immutableObjectStorageUpdateGatewayPrincipals: () -> ();
   _initializeAccessControl: () -> ();
+  addAdminMessage: (content: text, imageRef: opt text) -> (AdminMessage);
+  addLike: () -> (nat);
   addMidType: (midType: text) -> ();
+  addPublicMessage: (content: text, authorName: text) -> (PublicMessage);
   addSubject: (subject: text) -> ();
   assignCallerUserRole: (user: principal, role: UserRole) -> ();
   clearNote: () -> ();
+  deleteAdminMessage: (id: nat) -> ();
   deletePaper: (id: PaperId) -> (bool);
+  deletePublicMessage: (id: nat) -> ();
   getCallerUserRole: () -> (UserRole) query;
+  getLikeCount: () -> (nat) query;
   getNote: () -> (opt SiteNote) query;
   getPaper: (id: PaperId) -> (opt QuestionPaper) query;
-  getVisitorCount: () -> (nat) query;
   isCallerAdmin: () -> (bool) query;
+  listAdminMessages: () -> (vec AdminMessage) query;
   listMidTypes: () -> (vec text) query;
   listPapers: (filter: PaperFilter) -> (vec QuestionPaper) query;
+  listPublicMessages: () -> (vec PublicMessage) query;
   listSubjects: () -> (vec text) query;
   removeMidType: (midType: text) -> ();
   removeSubject: (subject: text) -> ();
   setNote: (content: text) -> ();
-  trackVisit: () -> (nat);
+  updateAdminMessage: (id: nat, content: text, imageRef: opt text) -> ();
   uploadPaper: (year: text, subject: text, midType: text, storageRef:
    ExternalBlob) -> (PaperId);
 }

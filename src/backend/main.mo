@@ -6,10 +6,16 @@ import OptionsLib "lib/options";
 import PaperTypes "types/papers";
 import PapersApi "mixins/papers-api";
 import OptionsApi "mixins/options-api";
-import VisitsApi "mixins/visits-api";
 import NoteTypes "types/note";
 import NoteApi "mixins/note-api";
+import LikesApi "mixins/likes-api";
+import AdminMessageTypes "types/admin-messages";
+import AdminMessagesApi "mixins/admin-messages-api";
+import PublicMessageTypes "types/public-messages";
+import PublicMessagesApi "mixins/public-messages-api";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   // Authorization state
   let accessControlState = AccessControl.initState();
@@ -45,13 +51,25 @@ actor {
 
   include OptionsApi(accessControlState, subjects, midTypes);
 
-  // Visit tracking state
-  let visitCount = object { public var value : Nat = 0 };
-
-  include VisitsApi(visitCount);
-
   // Site-wide note state
   let noteState = object { public var siteNote : ?NoteTypes.SiteNote = null };
 
   include NoteApi(accessControlState, noteState);
+
+  // Like button state
+  let likeState = object { public var count : Nat = 0 };
+
+  include LikesApi(likeState);
+
+  // Admin messages state
+  let adminMessages = List.empty<AdminMessageTypes.AdminMessage>();
+  let nextAdminMessageId = object { public var value : Nat = 0 };
+
+  include AdminMessagesApi(accessControlState, adminMessages, nextAdminMessageId);
+
+  // Public messages state
+  let publicMessages = List.empty<PublicMessageTypes.PublicMessage>();
+  let nextPublicMessageId = object { public var value : Nat = 0 };
+
+  include PublicMessagesApi(accessControlState, publicMessages, nextPublicMessageId);
 };

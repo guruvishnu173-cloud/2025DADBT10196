@@ -1,5 +1,11 @@
 import { ExternalBlob, createActor } from "@/backend";
-import type { PaperFilter, QuestionPaper, SiteNote } from "@/types";
+import type {
+  AdminMessage,
+  PaperFilter,
+  PublicMessage,
+  QuestionPaper,
+  SiteNote,
+} from "@/types";
 import { useActor } from "@caffeineai/core-infrastructure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -9,8 +15,6 @@ interface BackendActor {
   getPaper(id: bigint): Promise<QuestionPaper | null>;
   listSubjects(): Promise<string[]>;
   listMidTypes(): Promise<string[]>;
-  getVisitorCount(): Promise<bigint>;
-  trackVisit(): Promise<bigint>;
   isCallerAdmin(): Promise<boolean>;
   uploadPaper(
     year: string,
@@ -26,6 +30,25 @@ interface BackendActor {
   getNote(): Promise<SiteNote | null>;
   setNote(content: string): Promise<void>;
   clearNote(): Promise<void>;
+  // Likes
+  getLikeCount(): Promise<bigint>;
+  addLike(): Promise<bigint>;
+  // Admin messages
+  listAdminMessages(): Promise<AdminMessage[]>;
+  addAdminMessage(
+    content: string,
+    imageRef: string | null,
+  ): Promise<AdminMessage>;
+  updateAdminMessage(
+    id: bigint,
+    content: string,
+    imageRef: string | null,
+  ): Promise<void>;
+  deleteAdminMessage(id: bigint): Promise<void>;
+  // Public messages
+  listPublicMessages(): Promise<PublicMessage[]>;
+  addPublicMessage(content: string, authorName: string): Promise<PublicMessage>;
+  deletePublicMessage(id: bigint): Promise<void>;
 }
 
 function useBackendActor() {
@@ -86,31 +109,30 @@ export function useMidTypes() {
   });
 }
 
-// ─── Visitor Tracking ─────────────────────────────────────────────────────────
+// ─── Likes ────────────────────────────────────────────────────────────────────
 
-export function useVisitCount() {
+export function useLikeCount() {
   const { actor, isFetching } = useBackendActor();
   return useQuery<bigint>({
-    queryKey: ["visitCount"],
+    queryKey: ["likeCount"],
     queryFn: async () => {
       if (!actor) return 0n;
-      return actor.getVisitorCount();
+      return actor.getLikeCount();
     },
     enabled: !!actor && !isFetching,
-    refetchInterval: 30_000,
   });
 }
 
-export function useRecordVisit() {
+export function useAddLike() {
   const qc = useQueryClient();
   const { actor } = useBackendActor();
   return useMutation<bigint, Error, void>({
     mutationFn: async () => {
-      if (!actor) return 0n;
-      return actor.trackVisit();
+      if (!actor) throw new Error("Actor not ready");
+      return actor.addLike();
     },
     onSuccess: (count) => {
-      qc.setQueryData(["visitCount"], count);
+      qc.setQueryData(["likeCount"], count);
     },
   });
 }
@@ -260,4 +282,114 @@ export function useMutateNote() {
   });
 
   return { setNote, clearNote };
+}
+
+// ─── Admin Messages ───────────────────────────────────────────────────────────
+
+export function useAdminMessages() {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<AdminMessage[]>({
+    queryKey: ["adminMessages"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.listAdminMessages();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddAdminMessage() {
+  const qc = useQueryClient();
+  const { actor } = useBackendActor();
+  return useMutation<
+    AdminMessage,
+    Error,
+    { content: string; imageRef: string | null }
+  >({
+    mutationFn: async ({ content, imageRef }) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.addAdminMessage(content, imageRef);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["adminMessages"] });
+    },
+  });
+}
+
+export function useUpdateAdminMessage() {
+  const qc = useQueryClient();
+  const { actor } = useBackendActor();
+  return useMutation<
+    void,
+    Error,
+    { id: bigint; content: string; imageRef: string | null }
+  >({
+    mutationFn: async ({ id, content, imageRef }) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.updateAdminMessage(id, content, imageRef);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["adminMessages"] });
+    },
+  });
+}
+
+export function useDeleteAdminMessage() {
+  const qc = useQueryClient();
+  const { actor } = useBackendActor();
+  return useMutation<void, Error, bigint>({
+    mutationFn: async (id) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.deleteAdminMessage(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["adminMessages"] });
+    },
+  });
+}
+
+// ─── Public Messages ──────────────────────────────────────────────────────────
+
+export function usePublicMessages() {
+  const { actor, isFetching } = useBackendActor();
+  return useQuery<PublicMessage[]>({
+    queryKey: ["publicMessages"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.listPublicMessages();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddPublicMessage() {
+  const qc = useQueryClient();
+  const { actor } = useBackendActor();
+  return useMutation<
+    PublicMessage,
+    Error,
+    { content: string; authorName: string }
+  >({
+    mutationFn: async ({ content, authorName }) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.addPublicMessage(content, authorName);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["publicMessages"] });
+    },
+  });
+}
+
+export function useDeletePublicMessage() {
+  const qc = useQueryClient();
+  const { actor } = useBackendActor();
+  return useMutation<void, Error, bigint>({
+    mutationFn: async (id) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.deletePublicMessage(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["publicMessages"] });
+    },
+  });
 }

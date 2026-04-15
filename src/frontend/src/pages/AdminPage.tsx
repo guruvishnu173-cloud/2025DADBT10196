@@ -18,79 +18,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  useAddAdminMessage,
   useAddMidType,
   useAddSubject,
+  useAdminMessages,
+  useDeleteAdminMessage,
   useDeletePaper,
+  useDeletePublicMessage,
   useIsAdmin,
   useListPapers,
   useMidTypes,
   useMutateNote,
   useNote,
+  usePublicMessages,
   useRemoveMidType,
   useRemoveSubject,
   useSubjects,
+  useUpdateAdminMessage,
   useUploadPaper,
-  useVisitCount,
 } from "@/hooks/useQueries";
-import type { QuestionPaper } from "@/types";
+import type { AdminMessage, PublicMessage, QuestionPaper } from "@/types";
 import { useInternetIdentity } from "@caffeineai/core-infrastructure";
 import {
   BookOpen,
   FileText,
+  Image,
   LogIn,
+  MessageCircle,
   MessageSquare,
+  Pencil,
   Plus,
+  Send,
   ShieldCheck,
   ShieldX,
   Tag,
   Trash2,
-  TrendingUp,
   Upload,
-  Users,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
-// ─── Visitor Stats Card ───────────────────────────────────────────────────────
-
-function VisitorStatsCard() {
-  const { data: visitCount, isLoading } = useVisitCount();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
-      className="bg-gradient-to-br from-primary/8 via-card to-accent/8 border border-border rounded-xl p-5 flex items-center gap-5"
-      data-ocid="admin.visitor_stats_card"
-    >
-      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-        <Users className="w-6 h-6 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-body text-muted-foreground uppercase tracking-wider">
-          Total Visitors
-        </p>
-        {isLoading ? (
-          <Skeleton className="h-8 w-20 mt-1" />
-        ) : (
-          <p
-            className="font-display font-bold text-3xl text-foreground tabular-nums"
-            data-ocid="admin.visitor_count"
-          >
-            {visitCount !== undefined ? visitCount.toString() : "0"}
-          </p>
-        )}
-      </div>
-      <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-body">
-        <TrendingUp className="w-3.5 h-3.5 text-primary/60" />
-        <span>All time</span>
-      </div>
-    </motion.div>
-  );
-}
 
 // ─── Tag Manager ─────────────────────────────────────────────────────────────
 
@@ -219,15 +187,13 @@ function TagManager({
   );
 }
 
+// ─── Upload Form ──────────────────────────────────────────────────────────────
+
 function UploadForm({
   subjects,
   midTypes,
 }: { subjects: string[]; midTypes: string[] }) {
-  const [form, setForm] = useState({
-    year: "",
-    subject: "",
-    midType: "",
-  });
+  const [form, setForm] = useState({ year: "", subject: "", midType: "" });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: uploadPaper, isPending } = useUploadPaper();
@@ -384,6 +350,8 @@ function UploadForm({
   );
 }
 
+// ─── Paper Row ────────────────────────────────────────────────────────────────
+
 function PaperRow({ paper, index }: { paper: QuestionPaper; index: number }) {
   const { mutateAsync: deletePaper, isPending } = useDeletePaper();
 
@@ -468,7 +436,6 @@ function SiteNoteManager() {
   const [draft, setDraft] = useState("");
   const [synced, setSynced] = useState(false);
 
-  // Sync draft from server when note loads (only once)
   useEffect(() => {
     if (!synced && siteNote !== undefined) {
       setDraft(siteNote?.content ?? "");
@@ -498,9 +465,6 @@ function SiteNoteManager() {
     }
   };
 
-  const isSaving = setNote.isPending;
-  const isClearing = clearNote.isPending;
-
   return (
     <div
       className="bg-card border border-border rounded-xl p-6 space-y-5"
@@ -521,7 +485,6 @@ function SiteNoteManager() {
         </div>
       </div>
 
-      {/* Current note preview */}
       {isLoading ? (
         <Skeleton
           className="h-20 w-full rounded-lg"
@@ -550,7 +513,6 @@ function SiteNoteManager() {
         </div>
       )}
 
-      {/* Editor */}
       <div className="space-y-2">
         <Label
           htmlFor="sitenote-textarea"
@@ -562,7 +524,7 @@ function SiteNoteManager() {
           id="sitenote-textarea"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Type your message for students here… e.g. 'Mid-1 2024 papers are now available!'"
+          placeholder="Type your message for students here…"
           rows={4}
           className="resize-y text-sm font-body"
           data-ocid="sitenote.textarea"
@@ -572,15 +534,14 @@ function SiteNoteManager() {
         </p>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button
           onClick={handleSave}
-          disabled={isSaving || !draft.trim()}
+          disabled={setNote.isPending || !draft.trim()}
           className="gap-2"
           data-ocid="sitenote.save_button"
         >
-          {isSaving ? "Saving…" : "Save Note"}
+          {setNote.isPending ? "Saving…" : "Save Note"}
         </Button>
 
         {siteNote && (
@@ -589,19 +550,18 @@ function SiteNoteManager() {
               <Button
                 variant="outline"
                 className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/8 hover:text-destructive"
-                disabled={isClearing}
+                disabled={clearNote.isPending}
                 data-ocid="sitenote.clear_button"
               >
                 <Trash2 className="w-4 h-4" />
-                {isClearing ? "Clearing…" : "Clear Note"}
+                {clearNote.isPending ? "Clearing…" : "Clear Note"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent data-ocid="sitenote.dialog">
               <AlertDialogHeader>
                 <AlertDialogTitle>Clear site note?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  The note will be removed and no longer shown to students. You
-                  can publish a new one any time.
+                  The note will be removed and no longer shown to students.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -620,6 +580,357 @@ function SiteNoteManager() {
           </AlertDialog>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Admin Message Manager ────────────────────────────────────────────────────
+
+function AdminMessageRow({ msg, index }: { msg: AdminMessage; index: number }) {
+  const { mutate: deleteMsg, isPending: deleting } = useDeleteAdminMessage();
+  const { mutate: updateMsg, isPending: updating } = useUpdateAdminMessage();
+  const [editing, setEditing] = useState(false);
+  const [draftContent, setDraftContent] = useState(msg.content);
+  const [draftImageRef, setDraftImageRef] = useState(msg.imageRef ?? "");
+
+  const handleSave = () => {
+    updateMsg(
+      {
+        id: msg.id,
+        content: draftContent.trim(),
+        imageRef: draftImageRef.trim() || null,
+      },
+      {
+        onSuccess: () => {
+          setEditing(false);
+          toast.success("Message updated");
+        },
+      },
+    );
+  };
+
+  return (
+    <div
+      className="border border-border rounded-xl overflow-hidden bg-card"
+      data-ocid={`admin-msg.item.${index + 1}`}
+    >
+      {msg.imageRef && !editing && (
+        <img
+          src={msg.imageRef}
+          alt="Attachment"
+          className="w-full max-h-48 object-cover border-b border-border"
+        />
+      )}
+      <div className="p-4 space-y-2">
+        {editing ? (
+          <div className="space-y-3">
+            <Textarea
+              value={draftContent}
+              onChange={(e) => setDraftContent(e.target.value)}
+              className="text-sm resize-none min-h-[80px]"
+              autoFocus
+              data-ocid={`admin-msg.edit_textarea.${index + 1}`}
+            />
+            <div className="flex items-center gap-2">
+              <Image className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <Input
+                value={draftImageRef}
+                onChange={(e) => setDraftImageRef(e.target.value)}
+                placeholder="Image URL (JPG/GIF) — leave blank to remove"
+                className="text-sm h-9 flex-1"
+                data-ocid={`admin-msg.edit_imageref.${index + 1}`}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+                onClick={handleSave}
+                disabled={!draftContent.trim() || updating}
+                data-ocid={`admin-msg.save_button.${index + 1}`}
+              >
+                {updating ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs"
+                onClick={() => {
+                  setEditing(false);
+                  setDraftContent(msg.content);
+                  setDraftImageRef(msg.imageRef ?? "");
+                }}
+                data-ocid={`admin-msg.cancel_button.${index + 1}`}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">
+              {msg.content}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground font-body">
+                {new Date(Number(msg.createdAt) / 1_000_000).toLocaleDateString(
+                  "en-IN",
+                  {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  },
+                )}
+              </span>
+              <div className="flex gap-1.5">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                  onClick={() => setEditing(true)}
+                  aria-label="Edit"
+                  data-ocid={`admin-msg.edit_button.${index + 1}`}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => {
+                    deleteMsg(msg.id);
+                    toast.success("Message deleted");
+                  }}
+                  disabled={deleting}
+                  aria-label="Delete"
+                  data-ocid={`admin-msg.delete_button.${index + 1}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AdminMessagesManager() {
+  const { data: messages = [], isLoading } = useAdminMessages();
+  const { mutate: addMsg, isPending: adding } = useAddAdminMessage();
+  const [content, setContent] = useState("");
+  const [imageRef, setImageRef] = useState("");
+
+  const sorted = [...messages].sort((a, b) =>
+    Number(b.createdAt - a.createdAt),
+  );
+
+  const handleAdd = () => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    addMsg(
+      { content: trimmed, imageRef: imageRef.trim() || null },
+      {
+        onSuccess: () => {
+          setContent("");
+          setImageRef("");
+          toast.success("Message posted");
+        },
+        onError: () => toast.error("Failed to post message"),
+      },
+    );
+  };
+
+  return (
+    <div className="space-y-5" data-ocid="admin-messages.panel">
+      {/* Compose */}
+      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <MessageCircle className="w-4 h-4 text-primary" />
+          <h3 className="font-display font-semibold text-foreground text-sm">
+            Post New Message
+          </h3>
+        </div>
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Write a message to display to all visitors…"
+          className="min-h-[90px] text-sm resize-none font-body"
+          data-ocid="admin-messages.content_textarea"
+        />
+        <div className="flex items-center gap-2">
+          <Image className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <Input
+            value={imageRef}
+            onChange={(e) => setImageRef(e.target.value)}
+            placeholder="Image/GIF URL (optional)"
+            className="text-sm h-9 flex-1"
+            data-ocid="admin-messages.imageref_input"
+          />
+        </div>
+        <Button
+          size="sm"
+          className="gap-2 h-9"
+          onClick={handleAdd}
+          disabled={!content.trim() || adding}
+          data-ocid="admin-messages.submit_button"
+        >
+          <Send className="w-3.5 h-3.5" />
+          {adding ? "Posting…" : "Post Message"}
+        </Button>
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="space-y-3" data-ocid="admin-messages.loading_state">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
+      ) : sorted.length === 0 ? (
+        <div
+          className="flex flex-col items-center gap-3 py-10 text-center"
+          data-ocid="admin-messages.empty_state"
+        >
+          <MessageCircle className="w-8 h-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            No messages posted yet.
+          </p>
+        </div>
+      ) : (
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          data-ocid="admin-messages.list"
+        >
+          {sorted.map((msg, i) => (
+            <AdminMessageRow key={msg.id.toString()} msg={msg} index={i} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Public Messages Moderator ────────────────────────────────────────────────
+
+function PublicMessagesModerator() {
+  const { data: messages = [], isLoading } = usePublicMessages();
+  const { mutate: deleteMsg } = useDeletePublicMessage();
+
+  const sorted = [...messages].sort((a, b) =>
+    Number(b.createdAt - a.createdAt),
+  );
+
+  return (
+    <div className="space-y-4" data-ocid="public-messages.panel">
+      <div className="flex items-center gap-2 mb-1">
+        <Send className="w-4 h-4 text-primary" />
+        <div>
+          <h3 className="font-display font-semibold text-foreground text-sm">
+            Public Messages
+          </h3>
+          <p className="text-xs text-muted-foreground font-body">
+            Messages from visitors. You can delete any for moderation.
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3" data-ocid="public-messages.loading_state">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-16 rounded-xl" />
+          ))}
+        </div>
+      ) : sorted.length === 0 ? (
+        <div
+          className="flex flex-col items-center gap-3 py-10 text-center"
+          data-ocid="public-messages.empty_state"
+        >
+          <Send className="w-8 h-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            No public messages yet.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3" data-ocid="public-messages.list">
+          {sorted.map((msg: PublicMessage, i: number) => (
+            <div
+              key={msg.id.toString()}
+              className="flex items-start gap-3 bg-card border border-border rounded-xl px-4 py-3"
+              data-ocid={`public-msg.item.${i + 1}`}
+            >
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-display font-bold text-sm text-primary uppercase">
+                {msg.authorName.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                  <span className="text-sm font-semibold text-foreground truncate font-display">
+                    {msg.authorName}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-muted-foreground font-body">
+                      {new Date(
+                        Number(msg.createdAt) / 1_000_000,
+                      ).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          aria-label="Delete message"
+                          data-ocid={`public-msg.delete_button.${i + 1}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent
+                        data-ocid={`public-msg.dialog.${i + 1}`}
+                      >
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Delete this message?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Message from <strong>{msg.authorName}</strong> will
+                            be permanently removed.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            data-ocid={`public-msg.cancel_button.${i + 1}`}
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                              deleteMsg(msg.id);
+                              toast.success("Message removed");
+                            }}
+                            data-ocid={`public-msg.confirm_button.${i + 1}`}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+                <p className="text-sm font-body text-foreground break-words leading-relaxed">
+                  {msg.content}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -654,15 +965,13 @@ function AdminDashboard() {
             Admin Panel
           </h1>
           <p className="text-sm text-muted-foreground font-body">
-            Manage question papers and metadata
+            Manage question papers, messages, and metadata
           </p>
         </div>
       </motion.div>
 
-      <VisitorStatsCard />
-
       <Tabs defaultValue="upload" className="space-y-6">
-        <TabsList className="bg-muted/50">
+        <TabsList className="bg-muted/50 flex-wrap h-auto gap-1">
           <TabsTrigger
             value="upload"
             className="gap-1.5"
@@ -699,6 +1008,22 @@ function AdminDashboard() {
           >
             <MessageSquare className="w-4 h-4" />
             Site Note
+          </TabsTrigger>
+          <TabsTrigger
+            value="adminmessages"
+            className="gap-1.5"
+            data-ocid="admin.adminmessages_tab"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Admin Messages
+          </TabsTrigger>
+          <TabsTrigger
+            value="publicmessages"
+            className="gap-1.5"
+            data-ocid="admin.publicmessages_tab"
+          >
+            <Send className="w-4 h-4" />
+            Public Messages
           </TabsTrigger>
         </TabsList>
 
@@ -741,7 +1066,6 @@ function AdminDashboard() {
               </div>
             ) : (
               <div className="space-y-2" data-ocid="papers.list">
-                {/* Header row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-3 text-xs text-muted-foreground font-medium uppercase tracking-wide">
                   <span>Subject</span>
                   <span>Year</span>
@@ -786,10 +1110,26 @@ function AdminDashboard() {
         <TabsContent value="sitenote">
           <SiteNoteManager />
         </TabsContent>
+
+        {/* Admin Messages tab */}
+        <TabsContent value="adminmessages">
+          <div className="bg-card border border-border rounded-xl p-6">
+            <AdminMessagesManager />
+          </div>
+        </TabsContent>
+
+        {/* Public Messages tab */}
+        <TabsContent value="publicmessages">
+          <div className="bg-card border border-border rounded-xl p-6">
+            <PublicMessagesModerator />
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+// ─── Admin Page ───────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const { loginStatus, login, clear } = useInternetIdentity();
@@ -890,8 +1230,7 @@ export default function AdminPage() {
                 Access Denied
               </h2>
               <p className="text-muted-foreground font-body text-sm max-w-sm">
-                Your account does not have admin privileges. Contact the site
-                owner if you believe this is a mistake.
+                Your account does not have admin privileges.
               </p>
             </div>
             <Button

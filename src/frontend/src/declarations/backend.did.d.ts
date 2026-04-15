@@ -10,6 +10,13 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AdminMessage {
+  'id' : bigint,
+  'content' : string,
+  'createdAt' : Timestamp,
+  'updatedAt' : Timestamp,
+  'imageRef' : [] | [string],
+}
 export type ExternalBlob = Uint8Array;
 export interface PaperFilter {
   'subject' : [] | [string],
@@ -17,6 +24,12 @@ export interface PaperFilter {
   'midType' : [] | [string],
 }
 export type PaperId = bigint;
+export interface PublicMessage {
+  'id' : bigint,
+  'content' : string,
+  'createdAt' : Timestamp,
+  'authorName' : string,
+}
 export interface QuestionPaper {
   'id' : PaperId,
   'subject' : string,
@@ -61,23 +74,33 @@ export interface _SERVICE {
   >,
   '_immutableObjectStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControl' : ActorMethod<[], undefined>,
+  'addAdminMessage' : ActorMethod<[string, [] | [string]], AdminMessage>,
+  'addLike' : ActorMethod<[], bigint>,
   'addMidType' : ActorMethod<[string], undefined>,
+  'addPublicMessage' : ActorMethod<[string, string], PublicMessage>,
   'addSubject' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'clearNote' : ActorMethod<[], undefined>,
+  'deleteAdminMessage' : ActorMethod<[bigint], undefined>,
   'deletePaper' : ActorMethod<[PaperId], boolean>,
+  'deletePublicMessage' : ActorMethod<[bigint], undefined>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getLikeCount' : ActorMethod<[], bigint>,
   'getNote' : ActorMethod<[], [] | [SiteNote]>,
   'getPaper' : ActorMethod<[PaperId], [] | [QuestionPaper]>,
-  'getVisitorCount' : ActorMethod<[], bigint>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'listAdminMessages' : ActorMethod<[], Array<AdminMessage>>,
   'listMidTypes' : ActorMethod<[], Array<string>>,
   'listPapers' : ActorMethod<[PaperFilter], Array<QuestionPaper>>,
+  'listPublicMessages' : ActorMethod<[], Array<PublicMessage>>,
   'listSubjects' : ActorMethod<[], Array<string>>,
   'removeMidType' : ActorMethod<[string], undefined>,
   'removeSubject' : ActorMethod<[string], undefined>,
   'setNote' : ActorMethod<[string], undefined>,
-  'trackVisit' : ActorMethod<[], bigint>,
+  'updateAdminMessage' : ActorMethod<
+    [bigint, string, [] | [string]],
+    undefined
+  >,
   'uploadPaper' : ActorMethod<[string, string, string, ExternalBlob], PaperId>,
 }
 export declare const idlService: IDL.ServiceClass;

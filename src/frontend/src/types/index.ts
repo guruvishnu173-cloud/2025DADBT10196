@@ -15,13 +15,24 @@ export interface PaperFilter {
   midType?: string;
 }
 
-export interface VisitStats {
-  count: bigint;
-}
-
 export type AdminView = "papers" | "subjects" | "midtypes";
 
 export interface SiteNote {
   content: string;
   updatedAt: bigint;
+}
+
+export interface AdminMessage {
+  id: bigint;
+  content: string;
+  imageRef: string | null;
+  createdAt: bigint;
+  updatedAt: bigint;
+}
+
+export interface PublicMessage {
+  id: bigint;
+  content: string;
+  authorName: string;
+  createdAt: bigint;
 }

@@ -33,28 +33,48 @@ export interface QuestionPaper {
     midType: string;
     storageRef: ExternalBlob;
 }
+export interface PublicMessage {
+    id: bigint;
+    content: string;
+    createdAt: Timestamp;
+    authorName: string;
+}
+export interface AdminMessage {
+    id: bigint;
+    content: string;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    imageRef?: string;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
     guest = "guest"
 }
 export interface backendInterface {
+    addAdminMessage(content: string, imageRef: string | null): Promise<AdminMessage>;
+    addLike(): Promise<bigint>;
     addMidType(midType: string): Promise<void>;
+    addPublicMessage(content: string, authorName: string): Promise<PublicMessage>;
     addSubject(subject: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     clearNote(): Promise<void>;
+    deleteAdminMessage(id: bigint): Promise<void>;
     deletePaper(id: PaperId): Promise<boolean>;
+    deletePublicMessage(id: bigint): Promise<void>;
     getCallerUserRole(): Promise<UserRole>;
+    getLikeCount(): Promise<bigint>;
     getNote(): Promise<SiteNote | null>;
     getPaper(id: PaperId): Promise<QuestionPaper | null>;
-    getVisitorCount(): Promise<bigint>;
     isCallerAdmin(): Promise<boolean>;
+    listAdminMessages(): Promise<Array<AdminMessage>>;
     listMidTypes(): Promise<Array<string>>;
     listPapers(filter: PaperFilter): Promise<Array<QuestionPaper>>;
+    listPublicMessages(): Promise<Array<PublicMessage>>;
     listSubjects(): Promise<Array<string>>;
     removeMidType(midType: string): Promise<void>;
     removeSubject(subject: string): Promise<void>;
     setNote(content: string): Promise<void>;
-    trackVisit(): Promise<bigint>;
+    updateAdminMessage(id: bigint, content: string, imageRef: string | null): Promise<void>;
     uploadPaper(year: string, subject: string, midType: string, storageRef: ExternalBlob): Promise<PaperId>;
 }

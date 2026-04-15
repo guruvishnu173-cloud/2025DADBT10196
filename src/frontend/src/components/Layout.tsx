@@ -1,29 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Toaster } from "@/components/ui/sonner";
-import { useRecordVisit, useVisitCount } from "@/hooks/useQueries";
+import { useAddLike, useLikeCount } from "@/hooks/useQueries";
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { BookOpen, ShieldCheck, Users } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { BookOpen, Heart, ShieldCheck } from "lucide-react";
 
 export default function Layout() {
   const location = useLocation();
-  const { data: visitCount } = useVisitCount();
-  const { mutate: recordVisit } = useRecordVisit();
   const isAdmin = location.pathname === "/admin";
-  const hasRecorded = useRef(false);
-
-  useEffect(() => {
-    if (!hasRecorded.current) {
-      hasRecorded.current = true;
-      recordVisit();
-    }
-  }, [recordVisit]);
+  const { data: likeCount } = useLikeCount();
+  const { mutate: addLike, isPending: liking } = useAddLike();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border shadow-xs sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-4">
           {/* Brand */}
           <Link
             to="/"
@@ -38,34 +29,48 @@ export default function Layout() {
             </span>
           </Link>
 
-          {/* Right cluster */}
-          <div className="flex items-center gap-3">
-            {/* Visitor counter */}
-            <div
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm font-body"
-              data-ocid="header.visitor_counter"
-              title="Total visitors"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span className="font-medium tabular-nums">
-                {visitCount !== undefined ? visitCount.toString() : "—"}
-              </span>
-              <span className="text-xs opacity-70">visitors</span>
-            </div>
+          {/* Right cluster — logo on top, portals below */}
+          <div className="flex flex-col items-end gap-1.5">
+            {/* VVIT University logo */}
+            <img
+              src="/assets/images/vvit_university_guntur.jpg"
+              alt="VVIT University Guntur"
+              className="h-28 w-auto object-contain rounded"
+              data-ocid="header.university_logo"
+            />
 
-            {/* Admin link */}
-            <Link
-              to="/admin"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-body font-medium transition-smooth ${
-                isAdmin
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-              data-ocid="nav.admin_link"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span className="hidden sm:inline">Admin</span>
-            </Link>
+            {/* Portals row below logo */}
+            <div className="flex items-center gap-2">
+              {/* Like button */}
+              <button
+                type="button"
+                onClick={() => addLike()}
+                disabled={liking}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs font-body hover:bg-rose-100 hover:text-rose-600 transition-smooth disabled:opacity-60 cursor-pointer select-none"
+                data-ocid="header.like_button"
+                title="Like this website"
+                aria-label="Like this website"
+              >
+                <Heart className="w-3.5 h-3.5 fill-current" />
+                <span className="font-medium tabular-nums">
+                  {likeCount !== undefined ? likeCount.toString() : "—"}
+                </span>
+              </button>
+
+              {/* Admin link */}
+              <Link
+                to="/admin"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-body font-medium transition-smooth ${
+                  isAdmin
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+                data-ocid="nav.admin_link"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+            </div>
           </div>
         </div>
 

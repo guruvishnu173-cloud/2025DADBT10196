@@ -19,13 +19,26 @@ export const _ImmutableObjectStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
+export const Timestamp = IDL.Int;
+export const AdminMessage = IDL.Record({
+  'id' : IDL.Nat,
+  'content' : IDL.Text,
+  'createdAt' : Timestamp,
+  'updatedAt' : Timestamp,
+  'imageRef' : IDL.Opt(IDL.Text),
+});
+export const PublicMessage = IDL.Record({
+  'id' : IDL.Nat,
+  'content' : IDL.Text,
+  'createdAt' : Timestamp,
+  'authorName' : IDL.Text,
+});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
 export const PaperId = IDL.Nat;
-export const Timestamp = IDL.Int;
 export const SiteNote = IDL.Record({
   'content' : IDL.Text,
   'updatedAt' : Timestamp,
@@ -73,23 +86,38 @@ export const idlService = IDL.Service({
     ),
   '_immutableObjectStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControl' : IDL.Func([], [], []),
+  'addAdminMessage' : IDL.Func(
+      [IDL.Text, IDL.Opt(IDL.Text)],
+      [AdminMessage],
+      [],
+    ),
+  'addLike' : IDL.Func([], [IDL.Nat], []),
   'addMidType' : IDL.Func([IDL.Text], [], []),
+  'addPublicMessage' : IDL.Func([IDL.Text, IDL.Text], [PublicMessage], []),
   'addSubject' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'clearNote' : IDL.Func([], [], []),
+  'deleteAdminMessage' : IDL.Func([IDL.Nat], [], []),
   'deletePaper' : IDL.Func([PaperId], [IDL.Bool], []),
+  'deletePublicMessage' : IDL.Func([IDL.Nat], [], []),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getLikeCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getNote' : IDL.Func([], [IDL.Opt(SiteNote)], ['query']),
   'getPaper' : IDL.Func([PaperId], [IDL.Opt(QuestionPaper)], ['query']),
-  'getVisitorCount' : IDL.Func([], [IDL.Nat], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'listAdminMessages' : IDL.Func([], [IDL.Vec(AdminMessage)], ['query']),
   'listMidTypes' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'listPapers' : IDL.Func([PaperFilter], [IDL.Vec(QuestionPaper)], ['query']),
+  'listPublicMessages' : IDL.Func([], [IDL.Vec(PublicMessage)], ['query']),
   'listSubjects' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'removeMidType' : IDL.Func([IDL.Text], [], []),
   'removeSubject' : IDL.Func([IDL.Text], [], []),
   'setNote' : IDL.Func([IDL.Text], [], []),
-  'trackVisit' : IDL.Func([], [IDL.Nat], []),
+  'updateAdminMessage' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Opt(IDL.Text)],
+      [],
+      [],
+    ),
   'uploadPaper' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, ExternalBlob],
       [PaperId],
@@ -111,13 +139,26 @@ export const idlFactory = ({ IDL }) => {
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
   });
+  const Timestamp = IDL.Int;
+  const AdminMessage = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : IDL.Text,
+    'createdAt' : Timestamp,
+    'updatedAt' : Timestamp,
+    'imageRef' : IDL.Opt(IDL.Text),
+  });
+  const PublicMessage = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : IDL.Text,
+    'createdAt' : Timestamp,
+    'authorName' : IDL.Text,
+  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
   const PaperId = IDL.Nat;
-  const Timestamp = IDL.Int;
   const SiteNote = IDL.Record({
     'content' : IDL.Text,
     'updatedAt' : Timestamp,
@@ -165,23 +206,38 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_immutableObjectStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControl' : IDL.Func([], [], []),
+    'addAdminMessage' : IDL.Func(
+        [IDL.Text, IDL.Opt(IDL.Text)],
+        [AdminMessage],
+        [],
+      ),
+    'addLike' : IDL.Func([], [IDL.Nat], []),
     'addMidType' : IDL.Func([IDL.Text], [], []),
+    'addPublicMessage' : IDL.Func([IDL.Text, IDL.Text], [PublicMessage], []),
     'addSubject' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'clearNote' : IDL.Func([], [], []),
+    'deleteAdminMessage' : IDL.Func([IDL.Nat], [], []),
     'deletePaper' : IDL.Func([PaperId], [IDL.Bool], []),
+    'deletePublicMessage' : IDL.Func([IDL.Nat], [], []),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getLikeCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getNote' : IDL.Func([], [IDL.Opt(SiteNote)], ['query']),
     'getPaper' : IDL.Func([PaperId], [IDL.Opt(QuestionPaper)], ['query']),
-    'getVisitorCount' : IDL.Func([], [IDL.Nat], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'listAdminMessages' : IDL.Func([], [IDL.Vec(AdminMessage)], ['query']),
     'listMidTypes' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'listPapers' : IDL.Func([PaperFilter], [IDL.Vec(QuestionPaper)], ['query']),
+    'listPublicMessages' : IDL.Func([], [IDL.Vec(PublicMessage)], ['query']),
     'listSubjects' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'removeMidType' : IDL.Func([IDL.Text], [], []),
     'removeSubject' : IDL.Func([IDL.Text], [], []),
     'setNote' : IDL.Func([IDL.Text], [], []),
-    'trackVisit' : IDL.Func([], [IDL.Nat], []),
+    'updateAdminMessage' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Opt(IDL.Text)],
+        [],
+        [],
+      ),
     'uploadPaper' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, ExternalBlob],
         [PaperId],
