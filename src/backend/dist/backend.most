@@ -1,4 +1,4 @@
-// Version: 3.0.0
+// Version: 1.0.0
 type AdminMessage__113011440 =
   {
     content : Text;
@@ -41,49 +41,7 @@ type QuestionPaper__880740770 =
 type SiteNote__24883017 = {content : Text; updatedAt : Timestamp__301639476};
 type Timestamp__301639476 = Int;
 type UserRole__1054455867 = {#admin; #guest; #user};
-actor ({
-  stable accessControlState :
-    {
-      var adminAssigned : Bool;
-      userRoles : Map__605269027<Principal, UserRole__1054455867>
-    };
-  stable adminMessages :
-    {
-      var blockIndex : Nat__490723111;
-      var blocks : [var [var ?AdminMessage__113011440]];
-      var elementIndex : Nat__490723111
-    };
-  stable likeState : {var count : Nat};
-  stable midTypes :
-    {
-      var blockIndex : Nat__490723111;
-      var blocks : [var [var ?Text]];
-      var elementIndex : Nat__490723111
-    };
-  stable nextAdminMessageId : {var value : Nat};
-  stable nextPaperId : {var value : Nat};
-  stable nextPublicMessageId : {var value : Nat};
-  stable noteState : {var siteNote : ?SiteNote__24883017};
-  stable papers :
-    {
-      var blockIndex : Nat__490723111;
-      var blocks : [var [var ?QuestionPaper__880740770]];
-      var elementIndex : Nat__490723111
-    };
-  stable publicMessages :
-    {
-      var blockIndex : Nat__490723111;
-      var blocks : [var [var ?PublicMessage__111424700]];
-      var elementIndex : Nat__490723111
-    };
-  stable subjects :
-    {
-      var blockIndex : Nat__490723111;
-      var blocks : [var [var ?Text]];
-      var elementIndex : Nat__490723111
-    };
-  in visitCount : {var value : Nat}
-}, {
+actor {
   stable accessControlState :
     {
       var adminAssigned : Bool;
@@ -124,4 +82,4 @@ actor ({
       var blocks : [var [var ?Text]];
       var elementIndex : Nat__490723111
     }
-}) ;
+};

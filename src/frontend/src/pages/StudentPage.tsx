@@ -51,7 +51,7 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,6 +63,35 @@ function formatDate(timestamp: bigint): string {
     month: "short",
     year: "numeric",
   }).format(new Date(ms));
+}
+
+// ─── 3D Tilt Hook ─────────────────────────────────────────────────────────────
+
+function use3DTilt(strength = 12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, scale: 1 });
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const rotateY = ((x - cx) / cx) * strength;
+      const rotateX = -((y - cy) / cy) * strength;
+      setTilt({ rotateX, rotateY, scale: 1.03 });
+    },
+    [strength],
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ rotateX: 0, rotateY: 0, scale: 1 });
+  }, []);
+
+  return { ref, tilt, handleMouseMove, handleMouseLeave };
 }
 
 // ─── SiteNoteAdmin — inline admin editor for the site note ───────────────────
@@ -114,7 +143,11 @@ function SiteNoteAdmin() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -6 }}
         transition={{ duration: 0.22 }}
-        className="mb-6 rounded-xl border border-primary/30 bg-primary/6 px-4 py-4"
+        className="mb-6 rounded-xl glass-elevated depth-layer-2 border-primary/40 px-4 py-4"
+        style={{
+          borderColor: "oklch(var(--primary) / 0.4)",
+          background: "oklch(var(--card) / 0.9)",
+        }}
         data-ocid="sitenote.editor"
       >
         <div className="flex items-center gap-2 mb-3">
@@ -127,7 +160,8 @@ function SiteNoteAdmin() {
           value={draftText}
           onChange={(e) => setDraftText(e.target.value)}
           placeholder="Write a message for all visitors…"
-          className="min-h-[90px] text-sm bg-card resize-none font-body"
+          className="min-h-[90px] text-sm resize-none font-body"
+          style={{ background: "oklch(var(--background) / 0.6)" }}
           maxLength={600}
           autoFocus
           data-ocid="sitenote.textarea"
@@ -140,7 +174,7 @@ function SiteNoteAdmin() {
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground transition-dimensional"
               onClick={handleCancel}
               disabled={setNote.isPending}
               data-ocid="sitenote.cancel_button"
@@ -150,7 +184,7 @@ function SiteNoteAdmin() {
             </Button>
             <Button
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-8 text-xs gap-1.5 transition-dimensional active:scale-95 active:translate-y-px glow-primary"
               onClick={handleSave}
               disabled={!draftText.trim() || setNote.isPending}
               data-ocid="sitenote.save_button"
@@ -180,7 +214,7 @@ function SiteNoteAdmin() {
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/8"
+            className="h-7 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10 transition-dimensional active:scale-95"
             onClick={handleOpenEdit}
             data-ocid="sitenote.edit_button"
           >
@@ -190,7 +224,7 @@ function SiteNoteAdmin() {
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-xs gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/8"
+            className="h-7 text-xs gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10 transition-dimensional active:scale-95"
             onClick={handleClear}
             disabled={clearNote.isPending}
             data-ocid="sitenote.delete_button"
@@ -212,7 +246,7 @@ function SiteNoteAdmin() {
         <Button
           size="sm"
           variant="outline"
-          className="h-7 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/8"
+          className="h-7 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10 transition-dimensional active:scale-95"
           onClick={handleOpenEdit}
           data-ocid="sitenote.add_button"
         >
@@ -237,6 +271,7 @@ function AdminMessageCard({
 }) {
   const { mutate: deleteMsg, isPending: deleting } = useDeleteAdminMessage();
   const { mutate: updateMsg, isPending: updating } = useUpdateAdminMessage();
+  const { ref, tilt, handleMouseMove, handleMouseLeave } = use3DTilt(6);
 
   const [editing, setEditing] = useState(false);
   const [draftContent, setDraftContent] = useState(msg.content);
@@ -255,19 +290,32 @@ function AdminMessageCard({
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: index * 0.05 }}
-      className="bg-card border border-border rounded-xl overflow-hidden"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${tilt.scale})`,
+        transition: "transform 0.4s cubic-bezier(0.23, 1, 0.320, 1)",
+        transformStyle: "preserve-3d",
+        background: "oklch(var(--card) / 0.85)",
+        backdropFilter: "blur(16px)",
+        border: "1px solid oklch(var(--border) / 0.35)",
+      }}
+      className="rounded-xl overflow-hidden depth-layer-3"
       data-ocid={`admin-msg.item.${index + 1}`}
     >
       {msg.imageRef && (
-        <img
-          src={msg.imageRef}
-          alt="Admin message attachment"
-          className="w-full max-h-64 object-cover border-b border-border"
-          data-ocid={`admin-msg.image.${index + 1}`}
-        />
+        <div className="overflow-hidden" style={{ perspective: "800px" }}>
+          <img
+            src={msg.imageRef}
+            alt="Admin message attachment"
+            className="w-full max-h-64 object-cover border-b border-border/30 transition-dimensional hover:scale-105"
+            data-ocid={`admin-msg.image.${index + 1}`}
+          />
+        </div>
       )}
       <div className="px-4 py-3 space-y-2">
         {editing ? (
@@ -276,6 +324,7 @@ function AdminMessageCard({
               value={draftContent}
               onChange={(e) => setDraftContent(e.target.value)}
               className="text-sm resize-none min-h-[80px]"
+              style={{ background: "oklch(var(--background) / 0.6)" }}
               data-ocid={`admin-msg.edit_textarea.${index + 1}`}
               autoFocus
             />
@@ -284,12 +333,13 @@ function AdminMessageCard({
               onChange={(e) => setDraftImageRef(e.target.value)}
               placeholder="Image URL (JPG/GIF) — leave blank to remove"
               className="text-sm h-9"
+              style={{ background: "oklch(var(--background) / 0.6)" }}
               data-ocid={`admin-msg.edit_imageref.${index + 1}`}
             />
             <div className="flex gap-2">
               <Button
                 size="sm"
-                className="h-8 text-xs gap-1.5"
+                className="h-8 text-xs gap-1.5 transition-dimensional active:scale-95 active:translate-y-px"
                 onClick={handleSave}
                 disabled={!draftContent.trim() || updating}
                 data-ocid={`admin-msg.save_button.${index + 1}`}
@@ -299,7 +349,7 @@ function AdminMessageCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 text-xs text-muted-foreground"
+                className="h-8 text-xs text-muted-foreground transition-dimensional"
                 onClick={() => {
                   setEditing(false);
                   setDraftContent(msg.content);
@@ -326,7 +376,7 @@ function AdminMessageCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-primary transition-dimensional"
                     onClick={() => setEditing(true)}
                     aria-label="Edit message"
                     data-ocid={`admin-msg.edit_button.${index + 1}`}
@@ -336,7 +386,7 @@ function AdminMessageCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-dimensional"
                     onClick={() => deleteMsg(msg.id)}
                     disabled={deleting}
                     aria-label="Delete message"
@@ -386,17 +436,40 @@ function AdminMessagesSection() {
 
   return (
     <section
-      className="bg-muted/30 border-t border-b border-border"
+      style={{
+        background: "oklch(var(--muted) / 0.2)",
+        borderTop: "1px solid oklch(var(--border) / 0.5)",
+        borderBottom: "1px solid oklch(var(--border) / 0.5)",
+      }}
       data-ocid="admin-messages.section"
     >
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-accent-foreground" />
+          <div className="flex items-center gap-3">
+            {/* Glowing icon orb */}
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center depth-layer-2"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(var(--accent) / 0.25), oklch(var(--primary) / 0.15))",
+                boxShadow:
+                  "0 0 16px oklch(var(--accent) / 0.25), 0 4px 12px rgba(0,0,0,0.2)",
+                border: "1px solid oklch(var(--accent) / 0.3)",
+              }}
+            >
+              <MessageCircle
+                className="w-4.5 h-4.5 text-primary"
+                style={{ width: "1.125rem", height: "1.125rem" }}
+              />
             </div>
             <div>
-              <h2 className="font-display font-semibold text-foreground">
+              <h2
+                className="font-display font-semibold text-foreground"
+                style={{
+                  textShadow:
+                    "0 0 20px oklch(var(--primary) / 0.35), 0 1px 3px rgba(0,0,0,0.3)",
+                }}
+              >
                 Message from Admin
               </h2>
               <p className="text-xs text-muted-foreground font-body">
@@ -408,7 +481,7 @@ function AdminMessagesSection() {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/8 h-8"
+              className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10 h-8 transition-dimensional active:scale-95 active:translate-y-px"
               onClick={() => setShowForm(true)}
               data-ocid="admin-messages.add_button"
             >
@@ -423,7 +496,12 @@ function AdminMessagesSection() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-5 rounded-xl border border-primary/25 bg-card p-4 space-y-3"
+            className="mb-5 rounded-xl p-4 space-y-3 glass-elevated depth-layer-2"
+            style={{
+              borderColor: "oklch(var(--primary) / 0.3)",
+              boxShadow:
+                "0 0 24px oklch(var(--primary) / 0.12), 0 8px 24px rgba(0,0,0,0.2)",
+            }}
             data-ocid="admin-messages.add_form"
           >
             <p className="text-xs font-semibold text-primary font-display uppercase tracking-wide flex items-center gap-1.5">
@@ -434,6 +512,7 @@ function AdminMessagesSection() {
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Write your message to visitors…"
               className="min-h-[90px] text-sm resize-none font-body"
+              style={{ background: "oklch(var(--background) / 0.6)" }}
               autoFocus
               data-ocid="admin-messages.content_textarea"
             />
@@ -444,13 +523,14 @@ function AdminMessagesSection() {
                 onChange={(e) => setNewImageRef(e.target.value)}
                 placeholder="Image/GIF URL (optional)"
                 className="text-sm h-9 flex-1"
+                style={{ background: "oklch(var(--background) / 0.6)" }}
                 data-ocid="admin-messages.imageref_input"
               />
             </div>
             <div className="flex gap-2">
               <Button
                 size="sm"
-                className="h-8 text-xs gap-1.5"
+                className="h-8 text-xs gap-1.5 transition-dimensional active:scale-95 active:translate-y-px glow-primary"
                 onClick={handleAdd}
                 disabled={!newContent.trim() || adding}
                 data-ocid="admin-messages.submit_button"
@@ -460,7 +540,7 @@ function AdminMessagesSection() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 text-xs text-muted-foreground"
+                className="h-8 text-xs text-muted-foreground transition-dimensional"
                 onClick={() => {
                   setShowForm(false);
                   setNewContent("");
@@ -489,7 +569,10 @@ function AdminMessagesSection() {
             className="flex flex-col items-center gap-3 py-10 text-center"
             data-ocid="admin-messages.empty_state"
           >
-            <MessageCircle className="w-8 h-8 text-muted-foreground/40" />
+            <MessageCircle
+              className="w-8 h-8"
+              style={{ color: "oklch(var(--muted-foreground) / 0.4)" }}
+            />
             <p className="text-sm text-muted-foreground font-body">
               No messages from admin yet.
             </p>
@@ -497,6 +580,7 @@ function AdminMessagesSection() {
         ) : (
           <div
             className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            style={{ perspective: "1200px" }}
             data-ocid="admin-messages.list"
           >
             {sorted.map((msg, i) => (
@@ -532,10 +616,27 @@ function PublicMessageCard({
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.22, delay: index * 0.04 }}
-      className="bg-card border border-border rounded-xl px-4 py-3 flex items-start gap-3"
+      className="rounded-xl px-4 py-3 flex items-start gap-3 transition-dimensional hover:translate-y-[-2px]"
+      style={{
+        background: "oklch(var(--card) / 0.8)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid oklch(var(--border) / 0.3)",
+        boxShadow:
+          "0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
       data-ocid={`public-msg.item.${index + 1}`}
     >
-      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5 font-display font-bold text-sm text-primary uppercase">
+      {/* Avatar orb — floats subtly */}
+      <div
+        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-display font-bold text-sm uppercase"
+        style={{
+          background:
+            "linear-gradient(135deg, oklch(var(--primary) / 0.25), oklch(var(--accent) / 0.15))",
+          border: "1px solid oklch(var(--primary) / 0.3)",
+          boxShadow: "0 0 12px oklch(var(--primary) / 0.2)",
+          color: "oklch(var(--primary))",
+        }}
+      >
         {msg.authorName.charAt(0)}
       </div>
       <div className="flex-1 min-w-0">
@@ -551,7 +652,7 @@ function PublicMessageCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-dimensional"
                 onClick={() => deleteMsg(msg.id)}
                 disabled={isPending}
                 aria-label="Delete message"
@@ -602,16 +703,40 @@ function PublicMessagesSection() {
 
   return (
     <section
-      className="bg-background border-t border-border"
+      style={{
+        background: "oklch(var(--background))",
+        borderTop: "1px solid oklch(var(--border) / 0.4)",
+      }}
       data-ocid="public-messages.section"
     >
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Send className="w-4 h-4 text-primary" />
+        <div className="flex items-center gap-3 mb-5">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center depth-layer-2"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(var(--primary) / 0.2), oklch(var(--accent) / 0.1))",
+              boxShadow:
+                "0 0 16px oklch(var(--primary) / 0.2), 0 4px 12px rgba(0,0,0,0.2)",
+              border: "1px solid oklch(var(--primary) / 0.25)",
+            }}
+          >
+            <Send
+              style={{
+                width: "1.125rem",
+                height: "1.125rem",
+                color: "oklch(var(--primary))",
+              }}
+            />
           </div>
           <div>
-            <h2 className="font-display font-semibold text-foreground">
+            <h2
+              className="font-display font-semibold text-foreground"
+              style={{
+                textShadow:
+                  "0 0 20px oklch(var(--primary) / 0.3), 0 1px 3px rgba(0,0,0,0.3)",
+              }}
+            >
               Message to Admin
             </h2>
             <p className="text-xs text-muted-foreground font-body">
@@ -620,17 +745,23 @@ function PublicMessagesSection() {
           </div>
         </div>
 
-        {/* Post form */}
+        {/* Post form — glass elevated */}
         <form
           onSubmit={handleSubmit}
-          className="mb-6 bg-card border border-border rounded-xl p-4 space-y-3"
+          className="mb-6 rounded-xl p-4 space-y-3 glass-elevated depth-layer-2"
+          style={{
+            boxShadow:
+              "0 0 28px oklch(var(--primary) / 0.1), 0 8px 24px rgba(0,0,0,0.2)",
+            border: "1px solid oklch(var(--primary) / 0.2)",
+          }}
           data-ocid="public-messages.form"
         >
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="h-9 text-sm"
+            className="h-9 text-sm transition-dimensional focus:shadow-[0_0_12px_oklch(var(--primary)/0.25)]"
+            style={{ background: "oklch(var(--background) / 0.6)" }}
             maxLength={60}
             required
             data-ocid="public-messages.name_input"
@@ -639,7 +770,8 @@ function PublicMessagesSection() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write your message here…"
-            className="min-h-[80px] text-sm resize-none font-body"
+            className="min-h-[80px] text-sm resize-none font-body transition-dimensional"
+            style={{ background: "oklch(var(--background) / 0.6)" }}
             maxLength={500}
             required
             data-ocid="public-messages.content_textarea"
@@ -651,7 +783,7 @@ function PublicMessagesSection() {
             <Button
               type="submit"
               size="sm"
-              className="gap-1.5 h-8 text-xs"
+              className="gap-1.5 h-8 text-xs transition-dimensional active:scale-95 active:translate-y-px glow-primary"
               disabled={!name.trim() || !content.trim() || adding}
               data-ocid="public-messages.submit_button"
             >
@@ -673,7 +805,10 @@ function PublicMessagesSection() {
             className="flex flex-col items-center gap-3 py-10 text-center"
             data-ocid="public-messages.empty_state"
           >
-            <MessageCircle className="w-8 h-8 text-muted-foreground/40" />
+            <MessageCircle
+              className="w-8 h-8"
+              style={{ color: "oklch(var(--muted-foreground) / 0.4)" }}
+            />
             <p className="text-sm text-muted-foreground font-body">
               No messages yet. Be the first to leave a message!
             </p>
@@ -698,14 +833,33 @@ function PublicMessagesSection() {
 // ─── PaperCard ────────────────────────────────────────────────────────────────
 
 function PaperCard({ paper, index }: { paper: QuestionPaper; index: number }) {
-  const midColors: Record<string, string> = {
-    "Mid-1": "bg-accent/15 text-accent-foreground border-accent/30",
-    "Mid-2": "bg-primary/10 text-primary border-primary/30",
-    "End Sem": "bg-secondary text-secondary-foreground border-border",
-    Supplementary: "bg-muted text-muted-foreground border-border",
+  const { ref, tilt, handleMouseMove, handleMouseLeave } = use3DTilt(14);
+
+  const midBadgeStyles: Record<string, React.CSSProperties> = {
+    "Mid-1": {
+      background: "oklch(var(--accent) / 0.2)",
+      border: "1px solid oklch(var(--accent) / 0.4)",
+      color: "oklch(var(--accent-foreground))",
+    },
+    "Mid-2": {
+      background: "oklch(var(--primary) / 0.15)",
+      border: "1px solid oklch(var(--primary) / 0.4)",
+      color: "oklch(var(--primary))",
+    },
+    "End Sem": {
+      background: "oklch(var(--secondary) / 0.8)",
+      border: "1px solid oklch(var(--border))",
+      color: "oklch(var(--secondary-foreground))",
+    },
+    Supplementary: {
+      background: "oklch(var(--muted) / 0.8)",
+      border: "1px solid oklch(var(--border))",
+      color: "oklch(var(--muted-foreground))",
+    },
   };
-  const badgeClass =
-    midColors[paper.midType] ?? "bg-muted text-muted-foreground border-border";
+
+  const badgeStyle =
+    midBadgeStyles[paper.midType] ?? midBadgeStyles.Supplementary;
 
   const pdfUrl = paper.storageRef.getDirectURL();
   const filename = `${paper.year}-${paper.subject.replace(/\s+/g, "-")}-${paper.midType.replace(/\s+/g, "-")}.pdf`;
@@ -714,17 +868,70 @@ function PaperCard({ paper, index }: { paper: QuestionPaper; index: number }) {
     window.open(pdfUrl, "_blank", "noopener,noreferrer");
   };
 
+  const isHovering =
+    Math.abs(tilt.rotateX) > 0.5 || Math.abs(tilt.rotateY) > 0.5;
+
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, delay: index * 0.055 }}
-      className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:shadow-md hover:border-primary/25 transition-smooth group"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="rounded-xl p-5 flex flex-col gap-3 group cursor-default"
+      style={{
+        transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) translateY(${isHovering ? -8 : 0}px) translateZ(${isHovering ? 20 : 0}px) scale(${tilt.scale})`,
+        transition:
+          "transform 0.4s cubic-bezier(0.23, 1, 0.320, 1), box-shadow 0.4s cubic-bezier(0.23, 1, 0.320, 1), border-color 0.4s ease",
+        transformStyle: "preserve-3d",
+        background: "oklch(var(--card) / 0.9)",
+        backdropFilter: "blur(16px)",
+        border: isHovering
+          ? "1px solid oklch(var(--primary) / 0.5)"
+          : "1px solid oklch(var(--border) / 0.4)",
+        boxShadow: isHovering
+          ? "0 24px 48px rgba(0,0,0,0.4), 0 -6px 16px rgba(0,0,0,0.2), 0 0 28px oklch(var(--primary) / 0.2), inset 0 1px 0 rgba(255,255,255,0.12)"
+          : "0 4px 12px rgba(0,0,0,0.15), 0 -1px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
       data-ocid={`paper.item.${index + 1}`}
     >
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/12 transition-smooth">
-          <FileText className="w-5 h-5 text-primary" />
+      {/* Glass overlay shimmer */}
+      <div
+        className="absolute inset-0 rounded-xl pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)",
+          opacity: isHovering ? 1 : 0,
+          transition: "opacity 0.4s ease",
+        }}
+      />
+
+      <div className="flex items-start gap-3 relative">
+        {/* File icon with glow */}
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-dimensional"
+          style={{
+            background: isHovering
+              ? "linear-gradient(135deg, oklch(var(--primary) / 0.25), oklch(var(--accent) / 0.15))"
+              : "oklch(var(--primary) / 0.1)",
+            boxShadow: isHovering
+              ? "0 0 16px oklch(var(--primary) / 0.35), 0 4px 8px rgba(0,0,0,0.2)"
+              : "none",
+            border: `1px solid oklch(var(--primary) / ${isHovering ? "0.3" : "0.15"})`,
+            transition: "all 0.4s cubic-bezier(0.23, 1, 0.320, 1)",
+          }}
+        >
+          <FileText
+            className="w-5 h-5"
+            style={{
+              color: "oklch(var(--primary))",
+              filter: isHovering
+                ? "drop-shadow(0 0 6px oklch(var(--primary) / 0.6))"
+                : "none",
+              transition: "filter 0.4s ease",
+            }}
+          />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-display font-semibold text-foreground text-sm leading-snug line-clamp-2">
@@ -734,24 +941,32 @@ function PaperCard({ paper, index }: { paper: QuestionPaper; index: number }) {
             Year: {paper.year}
           </p>
         </div>
-        <Badge
-          variant="outline"
-          className={`text-xs font-medium shrink-0 ${badgeClass}`}
+        <span
+          className="text-xs font-medium shrink-0 px-2 py-0.5 rounded-full"
+          style={badgeStyle}
         >
           {paper.midType}
-        </Badge>
+        </span>
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body">
-        <Calendar className="w-3 h-3" />
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body relative">
+        <Calendar
+          className="w-3 h-3"
+          style={{ color: "oklch(var(--primary) / 0.6)" }}
+        />
         <span>Uploaded: {formatDate(paper.uploadTimestamp)}</span>
       </div>
 
-      <div className="flex gap-2 mt-auto">
+      <div className="flex gap-2 mt-auto relative">
         <Button
           size="sm"
-          variant="default"
-          className="flex-1 gap-1.5 text-xs"
+          className="flex-1 gap-1.5 text-xs transition-dimensional active:scale-95 active:translate-y-px"
+          style={{
+            boxShadow: isHovering
+              ? "0 0 12px oklch(var(--primary) / 0.3)"
+              : "none",
+            transition: "all 0.3s ease",
+          }}
           onClick={handleView}
           data-ocid={`paper.view_button.${index + 1}`}
         >
@@ -761,7 +976,18 @@ function PaperCard({ paper, index }: { paper: QuestionPaper; index: number }) {
         <Button
           size="sm"
           variant="outline"
-          className="flex-1 gap-1.5 text-xs border-accent/40 text-accent-foreground bg-accent/8 hover:bg-accent/15"
+          className="flex-1 gap-1.5 text-xs transition-dimensional active:scale-95 active:translate-y-px"
+          style={{
+            borderColor: "oklch(var(--accent) / 0.45)",
+            color: "oklch(var(--accent-foreground))",
+            background: isHovering
+              ? "oklch(var(--accent) / 0.2)"
+              : "oklch(var(--accent) / 0.08)",
+            boxShadow: isHovering
+              ? "0 0 12px oklch(var(--accent) / 0.25)"
+              : "none",
+            transition: "all 0.3s ease",
+          }}
           asChild
           data-ocid={`paper.download_button.${index + 1}`}
         >
@@ -779,7 +1005,15 @@ function PaperCard({ paper, index }: { paper: QuestionPaper; index: number }) {
 
 function PaperCardSkeleton() {
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3">
+    <div
+      className="rounded-xl p-5 flex flex-col gap-3"
+      style={{
+        background: "oklch(var(--card) / 0.7)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid oklch(var(--border) / 0.3)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+      }}
+    >
       <div className="flex items-start gap-3">
         <Skeleton className="w-10 h-10 rounded-lg" />
         <div className="flex-1 space-y-1.5">
@@ -836,21 +1070,86 @@ export default function StudentPage() {
 
   return (
     <ErrorBoundary>
-      {/* Hero */}
-      <section className="bg-primary/5 border-b border-border">
-        <div className="container mx-auto px-4 py-10 sm:py-14">
+      {/* ── Hero ── */}
+      <section
+        style={{
+          background:
+            "linear-gradient(180deg, oklch(var(--primary) / 0.08) 0%, oklch(var(--background)) 100%)",
+          borderBottom: "1px solid oklch(var(--border) / 0.4)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Ambient glow blobs */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: "-40px",
+            right: "-60px",
+            width: "280px",
+            height: "280px",
+            borderRadius: "50%",
+            background: "oklch(var(--primary) / 0.08)",
+            filter: "blur(60px)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: "-20px",
+            left: "10%",
+            width: "200px",
+            height: "200px",
+            borderRadius: "50%",
+            background: "oklch(var(--accent) / 0.06)",
+            filter: "blur(50px)",
+            pointerEvents: "none",
+          }}
+        />
+        <div className="container mx-auto px-4 py-10 sm:py-14 relative">
           <motion.div
             initial={{ opacity: 0, y: -14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="max-w-2xl"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium font-body mb-4">
+            {/* Tag pill — glass */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.35 }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium font-body mb-4"
+              style={{
+                background: "oklch(var(--primary) / 0.12)",
+                border: "1px solid oklch(var(--primary) / 0.3)",
+                color: "oklch(var(--primary))",
+                boxShadow: "0 0 16px oklch(var(--primary) / 0.15)",
+              }}
+            >
               <BookOpen className="w-3.5 h-3.5" />
               Question Paper Archive
-            </div>
-            <h1 className="font-display font-bold text-3xl sm:text-4xl text-foreground leading-tight">
-              Find Your <span className="text-primary">Question Papers</span>
+            </motion.div>
+
+            <h1
+              className="font-display font-bold text-3xl sm:text-4xl text-foreground leading-tight"
+              style={{
+                textShadow:
+                  "0 2px 12px rgba(0,0,0,0.3), 0 0 40px oklch(var(--primary) / 0.15)",
+              }}
+            >
+              Find Your{" "}
+              <span
+                style={{
+                  color: "oklch(var(--primary))",
+                  textShadow:
+                    "0 0 24px oklch(var(--primary) / 0.5), 0 2px 8px rgba(0,0,0,0.2)",
+                }}
+              >
+                Question Papers
+              </span>
             </h1>
             <p className="text-muted-foreground text-base font-body mt-3 max-w-lg">
               Search previous year exam papers by year, subject, and exam type.
@@ -860,18 +1159,48 @@ export default function StudentPage() {
         </div>
       </section>
 
-      {/* Filter form */}
-      <section className="bg-muted/40 border-b border-border">
+      {/* ── Filter form ── */}
+      <section
+        style={{
+          background: "oklch(var(--muted) / 0.15)",
+          borderBottom: "1px solid oklch(var(--border) / 0.4)",
+        }}
+      >
         <div className="container mx-auto px-4 py-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
+            className="rounded-2xl p-6 glass-elevated depth-layer-2"
+            style={{
+              boxShadow:
+                "0 0 32px oklch(var(--primary) / 0.08), 0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.07)",
+              border: "1px solid oklch(var(--border) / 0.3)",
+            }}
             data-ocid="filter.panel"
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Search className="w-4 h-4 text-primary" />
-              <h2 className="font-display font-semibold text-sm text-foreground">
+            <div className="flex items-center gap-2.5 mb-5">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(var(--primary) / 0.2), oklch(var(--accent) / 0.1))",
+                  border: "1px solid oklch(var(--primary) / 0.25)",
+                  boxShadow: "0 0 12px oklch(var(--primary) / 0.2)",
+                }}
+              >
+                <Search
+                  className="w-4 h-4"
+                  style={{ color: "oklch(var(--primary))" }}
+                />
+              </div>
+              <h2
+                className="font-display font-semibold text-sm text-foreground"
+                style={{
+                  textShadow:
+                    "0 0 16px oklch(var(--primary) / 0.25), 0 1px 3px rgba(0,0,0,0.2)",
+                }}
+              >
                 Search Filters
               </h2>
             </div>
@@ -891,7 +1220,11 @@ export default function StudentPage() {
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, year: e.target.value }))
                   }
-                  className="h-9 text-sm bg-card"
+                  className="h-9 text-sm transition-dimensional"
+                  style={{
+                    background: "oklch(var(--background) / 0.7)",
+                    border: "1px solid oklch(var(--input) / 0.7)",
+                  }}
                   data-ocid="filter.year_input"
                   maxLength={10}
                 />
@@ -907,7 +1240,11 @@ export default function StudentPage() {
                   disabled={subjectsLoading}
                 >
                   <SelectTrigger
-                    className="h-9 text-sm bg-card"
+                    className="h-9 text-sm transition-dimensional"
+                    style={{
+                      background: "oklch(var(--background) / 0.7)",
+                      border: "1px solid oklch(var(--input) / 0.7)",
+                    }}
                     data-ocid="filter.subject_select"
                   >
                     <SelectValue placeholder="Select Subject" />
@@ -932,7 +1269,11 @@ export default function StudentPage() {
                   disabled={midTypesLoading}
                 >
                   <SelectTrigger
-                    className="h-9 text-sm bg-card"
+                    className="h-9 text-sm transition-dimensional"
+                    style={{
+                      background: "oklch(var(--background) / 0.7)",
+                      border: "1px solid oklch(var(--input) / 0.7)",
+                    }}
                     data-ocid="filter.midtype_select"
                   >
                     <SelectValue placeholder="Select Exam Type" />
@@ -951,7 +1292,11 @@ export default function StudentPage() {
             <div className="flex items-center gap-3 mt-5">
               <Button
                 onClick={handleFind}
-                className="gap-2 px-6"
+                className="gap-2 px-6 transition-dimensional active:scale-95 active:translate-y-px"
+                style={{
+                  boxShadow:
+                    "0 0 20px oklch(var(--primary) / 0.3), 0 4px 12px rgba(0,0,0,0.2)",
+                }}
                 data-ocid="filter.find_button"
               >
                 <Search className="w-4 h-4" />
@@ -961,7 +1306,7 @@ export default function StudentPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-dimensional"
                   onClick={handleClear}
                   data-ocid="filter.clear_button"
                 >
@@ -980,12 +1325,12 @@ export default function StudentPage() {
       {/* Public Messages section */}
       <PublicMessagesSection />
 
-      {/* Results */}
+      {/* ── Results ── */}
       <section
         className="container mx-auto px-4 py-8"
         data-ocid="papers.section"
       >
-        {/* ── Note zone: admin editor + public note banner ── */}
+        {/* Note zone: admin editor + public note banner */}
         <AnimatePresence mode="sync">
           <SiteNoteAdmin key="admin-note-controls" />
 
@@ -996,11 +1341,25 @@ export default function StudentPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.3 }}
-              className="mb-6 flex gap-3 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3.5"
+              className="mb-6 flex gap-3 rounded-xl px-4 py-3.5"
+              style={{
+                background: "oklch(var(--primary) / 0.1)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid oklch(var(--primary) / 0.35)",
+                boxShadow:
+                  "0 0 20px oklch(var(--primary) / 0.2), 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
+                animation: "pulse-glow 3s ease-in-out infinite",
+              }}
               data-ocid="sitenote.card"
             >
               <div className="mt-0.5 flex-shrink-0">
-                <Info className="w-4 h-4 text-primary" />
+                <Info
+                  className="w-4 h-4"
+                  style={{
+                    color: "oklch(var(--primary))",
+                    filter: "drop-shadow(0 0 6px oklch(var(--primary) / 0.5))",
+                  }}
+                />
               </div>
               <p className="text-sm font-body text-foreground leading-relaxed whitespace-pre-wrap">
                 {siteNote.content}
@@ -1017,11 +1376,32 @@ export default function StudentPage() {
             className="flex flex-col items-center justify-center gap-4 py-20 text-center"
             data-ocid="papers.pre_search_state"
           >
-            <div className="w-16 h-16 rounded-2xl bg-primary/8 flex items-center justify-center">
-              <FileSearch className="w-8 h-8 text-primary/60" />
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center depth-layer-2 float-medium"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(var(--primary) / 0.15), oklch(var(--accent) / 0.08))",
+                border: "1px solid oklch(var(--primary) / 0.25)",
+                boxShadow:
+                  "0 0 24px oklch(var(--primary) / 0.2), 0 8px 24px rgba(0,0,0,0.2)",
+              }}
+            >
+              <FileSearch
+                className="w-8 h-8"
+                style={{
+                  color: "oklch(var(--primary) / 0.7)",
+                  filter: "drop-shadow(0 0 8px oklch(var(--primary) / 0.4))",
+                }}
+              />
             </div>
             <div className="space-y-1">
-              <h3 className="font-display font-semibold text-lg text-foreground">
+              <h3
+                className="font-display font-semibold text-lg text-foreground"
+                style={{
+                  textShadow:
+                    "0 0 16px oklch(var(--primary) / 0.2), 0 1px 3px rgba(0,0,0,0.2)",
+                }}
+              >
                 Ready to find papers?
               </h3>
               <p className="text-sm text-muted-foreground font-body max-w-xs">
@@ -1047,7 +1427,13 @@ export default function StudentPage() {
             className="flex flex-col items-center justify-center gap-4 py-20 text-center"
             data-ocid="papers.empty_state"
           >
-            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center depth-layer-1"
+              style={{
+                background: "oklch(var(--muted) / 0.6)",
+                border: "1px solid oklch(var(--border) / 0.3)",
+              }}
+            >
               <FileText className="w-8 h-8 text-muted-foreground" />
             </div>
             <div className="space-y-1">
@@ -1063,6 +1449,7 @@ export default function StudentPage() {
               variant="outline"
               size="sm"
               onClick={handleClear}
+              className="transition-dimensional active:scale-95"
               data-ocid="papers.empty_state.clear_button"
             >
               Clear filters
@@ -1078,7 +1465,11 @@ export default function StudentPage() {
                 paper{papers.length !== 1 ? "s" : ""} found
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* 3D perspective wrapper so cards tilt in shared 3D space */}
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              style={{ perspective: "1600px", perspectiveOrigin: "50% 40%" }}
+            >
               {papers.map((paper, i) => (
                 <PaperCard key={paper.id.toString()} paper={paper} index={i} />
               ))}

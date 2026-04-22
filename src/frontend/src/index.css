@@ -121,7 +121,94 @@
 }
 
 @layer utilities {
+  /* 3D Depth System */
+  .depth-layer-1 {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0
+      rgba(255, 255, 255, 0.05);
+  }
+
+  .depth-layer-2 {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 -2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .depth-layer-3 {
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3), 0 -4px 12px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .depth-layer-4 {
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 -6px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  /* Glass Morphism */
+  .glass-base {
+    background: oklch(var(--background) / 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid oklch(var(--primary) / 0.15);
+  }
+
+  .glass-elevated {
+    background: oklch(var(--card) / 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid oklch(var(--border) / 0.3);
+  }
+
+  /* Glow Accents */
+  .glow-primary {
+    box-shadow: 0 0 20px oklch(var(--primary) / 0.3);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 24px oklch(var(--accent) / 0.25);
+  }
+
+  /* Perspective & 3D */
+  .perspective-rotate {
+    perspective: 1200px;
+  }
+
+  .perspective-child {
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  /* Floating Animation */
+  .float-subtle {
+    animation: float-subtle 3s ease-in-out infinite;
+  }
+
+  @keyframes float-subtle {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .float-medium {
+    animation: float-medium 4s ease-in-out infinite;
+  }
+
+  @keyframes float-medium {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+
+  /* Transition */
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-dimensional {
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   }
 }

@@ -13,9 +13,9 @@ import AdminMessageTypes "types/admin-messages";
 import AdminMessagesApi "mixins/admin-messages-api";
 import PublicMessageTypes "types/public-messages";
 import PublicMessagesApi "mixins/public-messages-api";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   // Authorization state
   let accessControlState = AccessControl.initState();
@@ -48,6 +48,7 @@ actor {
   OptionsLib.addMidType(midTypes, "MID-1");
   OptionsLib.addMidType(midTypes, "MID-2");
   OptionsLib.addMidType(midTypes, "SUPPLE");
+  OptionsLib.addMidType(midTypes, "SEM");
 
   include OptionsApi(accessControlState, subjects, midTypes);
 

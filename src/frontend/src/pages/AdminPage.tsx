@@ -71,7 +71,7 @@ function TagManager({
   ocidPrefix,
 }: {
   title: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   items: string[];
   onAdd: (val: string) => Promise<void>;
   onRemove: (val: string) => Promise<void>;

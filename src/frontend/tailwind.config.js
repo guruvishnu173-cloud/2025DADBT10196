@@ -79,6 +79,12 @@ export default {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
+        "3d-1": "0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+        "3d-2": "0 8px 16px rgba(0, 0, 0, 0.2), 0 -2px 8px rgba(0, 0, 0, 0.1)",
+        "3d-3": "0 16px 32px rgba(0, 0, 0, 0.3), 0 -4px 12px rgba(0, 0, 0, 0.15)",
+        "3d-4": "0 24px 48px rgba(0, 0, 0, 0.4), 0 -6px 16px rgba(0, 0, 0, 0.2)",
+        "glow-primary": "0 0 20px rgba(194, 129, 45, 0.3)",
+        "glow-accent": "0 0 24px rgba(204, 136, 51, 0.25)",
       },
       keyframes: {
         "accordion-down": {
@@ -89,10 +95,30 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "float-subtle": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        "float-medium": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
+        },
+        "rotate-3d": {
+          "0%": { transform: "rotateX(0deg) rotateY(0deg)" },
+          "100%": { transform: "rotateX(360deg) rotateY(360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "float-subtle": "float-subtle 3s ease-in-out infinite",
+        "float-medium": "float-medium 4s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "rotate-3d": "rotate-3d 6s linear infinite",
       },
     },
   },

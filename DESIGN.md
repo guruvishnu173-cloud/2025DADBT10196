@@ -2,72 +2,76 @@
 
 ## Direction
 
-Academic Question Paper Library — A clean, trustworthy interface for discovering and managing college question papers with distinct admin and public zones.
+**3D Immersive Academic Archive** — Deep dimensional experience inspired by ActiveTheory; layered floating depth, glassmorphic surfaces, perspective transforms, and interactive dimensional elevation create premium, memorable interaction. Floating UI elements hover above background layers with strong ambient shadows. Every surface has distinct Z-axis position.
 
 ## Tone
 
-Educational and focused — refined minimalism with a modern tech edge, avoiding coldness through warm secondary accents and spacious breathing room.
+Bold contemporary tech — immersive 3D depth, dimensional floating cards, glassmorphic panels, glowing accents. Luxury meets accessibility: premium visual complexity balanced with clear hierarchy and content-first design.
 
 ## Differentiation
 
-Dual-zone visual separation: public discovery (spacious, neutral) vs. admin upload area (subtle warm amber accents on buttons), creating instant visual hierarchy without visual clutter.
+Layered perspective system: hero floats above mid-layer cards, which float above base grid. Glassmorphic surfaces blur into depth. Orange primary glows with dimensional shadows. Parallax and hover-activated 3D transforms. Public + admin zones use identical depth system for unified dimensional language.
 
 ## Color Palette
 
-| Token      | OKLCH (Light)     | OKLCH (Dark)      | Role                      |
-| ---------- | ----------------- | ----------------- | ------------------------- |
-| background | 0.99 0.004 240    | 0.145 0.01 240    | Primary surface           |
-| foreground | 0.16 0.015 240    | 0.95 0.008 240    | Body text                 |
-| primary    | 0.38 0.18 240     | 0.75 0.16 240     | Deep ocean blue—main CTA  |
-| accent     | 0.68 0.15 60      | 0.72 0.15 60      | Warm amber—admin actions  |
-| muted      | 0.94 0.008 240    | 0.22 0.012 240    | Secondary surface         |
-| destructive| 0.55 0.22 25      | 0.65 0.19 22      | Delete/danger             |
+| Token      | OKLCH (Dark)      | Role                           |
+| ---------- | ----------------- | ------------------------------ |
+| background | 0.23 0.008 55     | Deep layered base surface      |
+| foreground | 0.94 0.008 55     | High-contrast text             |
+| primary    | 0.76 0.16 45      | Warm orange—main CTA + glow    |
+| accent     | 0.8 0.17 42       | Secondary warm—accent depth    |
+| card       | 0.27 0.01 55      | Mid-layer floating surfaces    |
+| border     | 0.35 0.01 55      | Glass + dimensional edges      |
+| muted      | 0.31 0.012 55     | Tertiary depth layer           |
+| destructive| 0.65 0.19 22      | Delete/danger with depth       |
 
 ## Typography
 
-- Display: Space Grotesk — hero text, section headings, form labels (geometric, modern, tech-forward)
-- Body: Figtree — paragraphs, descriptions, UI text (warm, highly readable, friendly)
-- Mono: JetBrains Mono — code blocks, file names
-- Scale: hero `text-4xl md:text-5xl font-bold tracking-tight`, h2 `text-2xl font-semibold`, label `text-sm font-semibold`, body `text-base`
+- Display: Space Grotesk — geometric, tech-forward, dimensional headlines
+- Body: Figtree — warm, highly readable paragraphs and UI labels
+- Mono: JetBrains Mono — code and technical content
+- Scale: hero `text-5xl font-bold tracking-tight`, h2 `text-2xl font-semibold`, label `text-sm font-semibold`, body `text-base`
 
-## Elevation & Depth
+## Elevation & 3D System
 
-Subtle borders and soft transitions: no heavy shadows, instead use background shifts and thin `border` tokens to define card and surface hierarchy; accessibility-focused with 90+ WCAG contrast.
+Four-tier depth layer system via ambient shadows: `.depth-layer-1` (subtle inset glow), `.depth-layer-2` (elevated card), `.depth-layer-3` (floating mid-level), `.depth-layer-4` (foreground active). Glass morphism (background blur + semi-transparent) on all surfaces. Glow halos on primary interactive elements. Perspective transforms on hover.
 
 ## Structural Zones
 
-| Zone    | Background          | Border              | Notes                                    |
-| ------- | ------------------- | ------------------- | ---------------------------------------- |
-| Header  | `bg-primary`        | none                | Dark blue header with white text         |
-| Content | `bg-background`     | none                | Main spacious work area                  |
-| Cards   | `bg-card`           | `border-border`     | Paper listings with thin border          |
-| Admin   | `bg-accent/5`       | none                | Admin zone has warm amber background     |
-| Footer  | `bg-muted`          | `border-t border-border` | Secondary surface, visible separator  |
+| Zone     | Background              | Shadow           | Notes                                   |
+| -------- | ----------------------- | ---------------- | --------------------------------------- |
+| Hero     | `glass-base`            | `depth-layer-4`  | Floating above content, highest Z-axis |
+| Header   | `glass-elevated`        | `depth-layer-2`  | Semi-transparent glass layer            |
+| Content  | `bg-background`         | none             | Base grid layer, lowest Z-axis          |
+| Cards    | `glass-elevated`        | `depth-layer-3`  | Floating mid-layer with glow            |
+| Admin    | `glass-elevated`        | `depth-layer-3`  | Same depth as content cards             |
+| Footer   | `glass-base`            | `depth-layer-1`  | Subtle elevated base                    |
 
 ## Spacing & Rhythm
 
-Spacious density: section gaps of `2rem`, content grouping with `1.5rem` padding, micro-spacing `0.5rem` for form fields; generous white space around filter forms and paper cards for clarity.
+Generous layered spacing: 3rem gaps between depth zones, 2rem section padding, 1.5rem card internal padding. Floating margins create air between layers. Breathing room around glass surfaces.
 
 ## Component Patterns
 
-- Buttons: `primary` for main CTAs (blue), `accent` for admin/upload (amber), rounded `sm` (4px), high contrast
-- Cards: `rounded-md` (8px), `bg-card`, thin `border-border`, no shadow
-- Badges: `rounded-full`, `bg-secondary`, `text-secondary-foreground`, small font
-- Form inputs: `rounded-sm` (4px), `border-input`, `bg-background`
+- Buttons: primary `glow-primary` + `depth-layer-2` on hover, round corners, smooth scale
+- Cards: `glass-elevated` + `depth-layer-3`, floating animation, hover 3D rotate-y
+- Glass surfaces: `backdrop-filter blur-xl` + semi-transparent background, thin borders
+- Badges: `rounded-full`, floating with subtle animation
 
-## Motion
+## Motion Choreography
 
-- Entrance: form fields fade-in on page load (100ms stagger)
-- Hover: buttons scale 102%, background color shifts
-- Decorative: none—keep focus on content and interactions
+- Page load: cards float-in with staggered 100ms timing
+- Hover: buttons scale 105% + glow intensify, cards rotate 2deg on Y-axis
+- Interactive: smooth 0.4s dimensional transitions (ease-out-back)
+- Continuous: `float-subtle` (3s) on mid-level elements, `float-medium` (4s) on hero
 
 ## Constraints
 
-- No gradients; use solid OKLCH colors only
-- No heavy shadows or blur effects; depth via elevation zones
-- No more than two accent colors (primary blue + warm amber)
-- Admin upload form always visually distinct from public search interface
+- No flat surfaces; every element has depth shadow or glass
+- Glow halos only on primary interactive elements (avoid neon saturation)
+- Glass blur always paired with semi-transparent background (no pure glass)
+- Perspective rotations subtle (max 2-3 degrees) to maintain readability
 
 ## Signature Detail
 
-Warm amber accents on admin/upload buttons create a visual "hotspot" that guides the owner's eye without disrupting the clean, academic aesthetic—combining trustworthiness (blue primary) with action-readiness (amber secondary).
+**Dimensional floating depth**: Cards hover above base layer with multi-shadow depth system, creating ActiveTheory-style immersive space. Warm orange primary glows from within dimensional surfaces. Parallax perspective on scroll creates continuous 3D sensation throughout.
